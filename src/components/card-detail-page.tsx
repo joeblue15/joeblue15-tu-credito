@@ -1,12 +1,11 @@
 "use client";
 
-import { BadgeDollarSign, CreditCard, ShieldCheck, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 
-import { RichTextContent } from "@/components/rich-text-content";
 import { Button } from "@/components/ui/button";
+import { RichTextContent } from "@/components/rich-text-content";
 import { useCompare } from "@/context/compare-context";
 import { useCatalogData } from "@/hooks/use-catalog-data";
 import { getCategoryLabel, stripHtml } from "@/lib/format";
@@ -25,19 +24,20 @@ export function CardDetailPage({ slug }: { slug: string }) {
       description: stripHtml(card.description),
       brand: card.bank.name,
       category: card.category,
+      image: "/assets/placeholder.svg",
     };
   }, [card]);
 
   if (loading && !card) {
-    return <div className="mx-auto max-w-7xl px-4 py-12 text-slate-300">Cargando tarjeta...</div>;
+    return <div className="mx-auto max-w-[1220px] px-5 py-16 text-sm text-white/45 sm:px-8">Cargando tarjeta...</div>;
   }
 
   if (!card) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-12 text-center">
-        <h1 className="text-3xl font-semibold text-white">Tarjeta no encontrada</h1>
-        <p className="mt-3 text-slate-400">La tarjeta que buscas no existe o no está activa.</p>
-        <Button asChild className="mt-6 rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
+      <div className="mx-auto max-w-[760px] px-5 py-16 text-center sm:px-8">
+        <h1 className="text-[42px] font-semibold text-white">Tarjeta no encontrada</h1>
+        <p className="mt-4 text-sm text-white/45">La tarjeta que buscas no está disponible.</p>
+        <Button asChild className="mt-8 rounded-none bg-white text-black hover:bg-white/90">
           <Link href="/tarjetas">Volver al catálogo</Link>
         </Button>
       </div>
@@ -45,93 +45,77 @@ export function CardDetailPage({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+    <div className="mx-auto max-w-[1220px] px-5 py-14 sm:px-8 sm:py-16">
       {jsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} /> : null}
-      <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="overflow-hidden rounded-[36px] border border-white/10 bg-white/[0.04] p-4">
-          <Image src={card.imageUrl} alt={card.name} width={1200} height={1400} className="aspect-[4/5] w-full rounded-[30px] object-cover" priority />
+      <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="border border-white/8 bg-[#080808] p-5">
+          <Image src="/assets/placeholder.svg" alt="placeholder" width={400} height={300} className="h-auto w-full border border-white/8" priority />
         </div>
-        <div className="space-y-5 rounded-[36px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
-          <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-primary">{getCategoryLabel(card.category)} · {card.bank.name}</p>
-            <h1 className="mt-3 text-4xl font-semibold text-white">{card.name}</h1>
-            <p className="mt-4 text-base leading-8 text-slate-300">{card.details.highlight}</p>
+        <div className="border border-white/8 bg-[#080808] p-6">
+          <p className="text-[10px] uppercase tracking-[0.16em] text-white/35">{card.bank.name}</p>
+          <h1 className="mt-4 text-[42px] font-semibold leading-none text-white">{card.name}</h1>
+          <p className="mt-4 text-sm text-white/45">{getCategoryLabel(card.category)}</p>
+          <p className="mt-6 text-[14px] leading-8 text-white/55">{card.details.highlight}</p>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            <DetailRow label="Anualidad" value={card.details.annualFee} />
+            <DetailRow label="Ingreso mínimo" value={card.details.minIncome} />
+            <DetailRow label="Moneda" value={card.details.currency} />
+            <DetailRow label="Aprobación" value={card.details.approvalLevel} />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <DetailMetric icon={BadgeDollarSign} label="Anualidad" value={card.details.annualFee} />
-            <DetailMetric icon={ShieldCheck} label="Ingreso mínimo" value={card.details.minIncome} />
-            <DetailMetric icon={CreditCard} label="Moneda" value={card.details.currency} />
-            <DetailMetric icon={Sparkles} label="Nivel de aprobación" value={card.details.approvalLevel} />
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button onClick={() => toggleCard(card.slug)} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Button onClick={() => toggleCard(card.slug)} className="rounded-none bg-white text-black hover:bg-white/90">
               {isSelected(card.slug) ? "Quitar de comparar" : "Agregar a comparar"}
             </Button>
-            <Button asChild variant="outline" className="rounded-full border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white">
-              <Link href="/comparar">Ir al comparador</Link>
+            <Button asChild variant="outline" className="rounded-none border-white/20 bg-transparent text-white hover:bg-transparent hover:text-white">
+              <Link href="/comparar">Ir a comparar</Link>
             </Button>
           </div>
-          <div className="rounded-[28px] border border-white/10 bg-black/20 p-5">
-            <p className="text-sm font-medium text-white">Perfil ideal</p>
-            <p className="mt-3 text-sm leading-7 text-slate-300">{card.details.idealProfile}</p>
-          </div>
         </div>
-      </section>
+      </div>
 
-      <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-6 rounded-[36px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
-          <div>
-            <h2 className="text-2xl font-semibold text-white">Descripción completa</h2>
-            <div className="mt-4">
-              <RichTextContent html={card.description} />
-            </div>
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="border border-white/8 bg-[#080808] p-6">
+          <h2 className="text-[28px] font-semibold text-white">Descripción</h2>
+          <div className="mt-5">
+            <RichTextContent html={card.description} />
           </div>
-          {card.contentBlocks?.length ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {card.contentBlocks.map((block) => (
-                <div key={block.title} className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-                  <h3 className="text-lg font-semibold text-white">{block.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-300">{block.body}</p>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
+          <div className="mt-8 border-t border-white/8 pt-6">
+            <h3 className="text-[20px] font-semibold text-white">Perfil ideal</h3>
+            <p className="mt-3 text-[14px] leading-8 text-white/55">{card.details.idealProfile}</p>
+          </div>
+        </section>
         <div className="space-y-6">
-          <div className="rounded-[36px] border border-white/10 bg-white/[0.04] p-6">
-            <h2 className="text-2xl font-semibold text-white">Beneficios</h2>
-            <div className="mt-5 space-y-3">
+          <section className="border border-white/8 bg-[#080808] p-6">
+            <h2 className="text-[24px] font-semibold text-white">Beneficios</h2>
+            <ul className="mt-5 space-y-3 text-[13px] leading-7 text-white/60">
               {card.benefits.map((benefit) => (
-                <div key={benefit} className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">{benefit}</div>
+                <li key={benefit}>• {benefit}</li>
               ))}
-            </div>
-          </div>
-          <div className="rounded-[36px] border border-white/10 bg-white/[0.04] p-6">
-            <h2 className="text-2xl font-semibold text-white">Requisitos</h2>
-            <div className="mt-5 space-y-3">
+            </ul>
+          </section>
+          <section className="border border-white/8 bg-[#080808] p-6">
+            <h2 className="text-[24px] font-semibold text-white">Requisitos</h2>
+            <ul className="mt-5 space-y-3 text-[13px] leading-7 text-white/60">
               {card.requirements.map((requirement) => (
-                <div key={requirement} className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">{requirement}</div>
+                <li key={requirement}>• {requirement}</li>
               ))}
-            </div>
-          </div>
-          <div className="rounded-[36px] border border-white/10 bg-white/[0.04] p-6">
-            <h2 className="text-2xl font-semibold text-white">SEO description</h2>
-            <p className="mt-4 text-sm leading-7 text-slate-300">{card.details.seoDescription}</p>
-          </div>
+            </ul>
+          </section>
+          <section className="border border-white/8 bg-[#080808] p-6">
+            <h2 className="text-[24px] font-semibold text-white">SEO description</h2>
+            <p className="mt-4 text-[13px] leading-7 text-white/55">{card.details.seoDescription}</p>
+          </section>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
 
-function DetailMetric({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[26px] border border-white/10 bg-white/5 p-4">
-      <div className="mb-2 flex items-center gap-2 text-sm text-slate-400">
-        <Icon className="size-4 text-primary" />
-        {label}
-      </div>
-      <p className="text-lg font-semibold text-white">{value}</p>
+    <div className="border border-white/8 p-4">
+      <p className="text-[10px] uppercase tracking-[0.16em] text-white/35">{label}</p>
+      <p className="mt-2 text-[15px] text-white">{value}</p>
     </div>
   );
 }

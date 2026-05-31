@@ -8,12 +8,13 @@ export default function IaPage() {
   const { cardsWithBanks, loading } = useCatalogData();
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-      <section className="rounded-[36px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
-        <p className="text-xs uppercase tracking-[0.22em] text-primary">IA</p>
-        <h1 className="mt-3 text-4xl font-semibold text-white">Recomendaciones inteligentes de tarjetas</h1>
-        <p className="mt-4 max-w-3xl text-sm leading-8 text-slate-300">Haz preguntas como si chatearas por WhatsApp y recibe sugerencias reales del sistema con diferencias claras entre opciones.</p>
-      </section>
+    <div className="mx-auto max-w-[1220px] px-5 py-14 sm:px-8 sm:py-16">
+      <div className="mb-10">
+        <h1 className="text-[42px] font-semibold text-white sm:text-[54px]">Asesor IA</h1>
+        <p className="mt-3 max-w-2xl text-[14px] leading-7 text-white/45">
+          Pregunta por cashback, viajes, anualidad o perfiles recomendados y obtén respuestas limpias con tarjetas reales del sistema.
+        </p>
+      </div>
       {loading ? <LoadingGrid /> : <AiChat cards={cardsWithBanks} />}
     </div>
   );

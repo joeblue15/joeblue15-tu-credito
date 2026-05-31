@@ -1,6 +1,5 @@
 "use client";
 
-import { Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -17,56 +16,67 @@ export function CatalogBrowser() {
   const initialCategory = searchParams.get("categoria") ?? "all";
   const [category, setCategory] = useState(initialCategory);
   const [search, setSearch] = useState("");
-  const [sortByBank, setSortByBank] = useState("all");
+  const [bankFilter, setBankFilter] = useState("all");
   const { cardsWithBanks, loading, banks } = useCatalogData();
 
   const filteredCards = useMemo(() => {
     return cardsWithBanks
       .filter((card) => card.active && card.visibility !== "draft")
       .filter((card) => category === "all" || card.category === category)
-      .filter((card) => sortByBank === "all" || card.bankId === sortByBank)
+      .filter((card) => bankFilter === "all" || card.bankId === bankFilter)
       .filter((card) => {
-        const query = search.toLowerCase();
-        return card.name.toLowerCase().includes(query) || card.bank.name.toLowerCase().includes(query);
-      })
-      .sort((a, b) => a.bank.name.localeCompare(b.bank.name));
-  }, [banks, cardsWithBanks, category, search, sortByBank]);
+        const query = search.toLowerCase().trim();
+        return !query || card.name.toLowerCase().includes(query) || card.bank.name.toLowerCase().includes(query);
+      });
+  }, [bankFilter, cardsWithBanks, category, search]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-      <section className="rounded-[36px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
-        <p className="text-xs uppercase tracking-[0.22em] text-primary">Catálogo</p>
-        <h1 className="mt-3 text-4xl font-semibold text-white">Tarjetas de crédito en República Dominicana</h1>
-        <p className="mt-4 max-w-3xl text-sm leading-8 text-slate-300">Filtra por categoría, busca por nombre y ordena por banco dentro de una galería visual premium con tarjetas comparables.</p>
-        <div className="mt-8 grid gap-3 lg:grid-cols-[1.1fr_0.9fr_0.9fr]">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
-            <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por tarjeta o banco" className="h-12 rounded-full border-white/10 bg-white/5 pl-11 text-white placeholder:text-slate-500" />
-          </div>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="h-12 rounded-full border-white/10 bg-white/5 text-white">
-              <SelectValue placeholder="Categoría" />
-            </SelectTrigger>
-            <SelectContent className="border-white/10 bg-[#111322] text-white">
-              <SelectItem value="all">Todas las categorías</SelectItem>
-              {CARD_CATEGORIES.map((item) => <SelectItem key={item} value={item}>{categoryLabels[item]}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={sortByBank} onValueChange={setSortByBank}>
-            <SelectTrigger className="h-12 rounded-full border-white/10 bg-white/5 text-white">
-              <SelectValue placeholder="Banco" />
-            </SelectTrigger>
-            <SelectContent className="border-white/10 bg-[#111322] text-white">
-              <SelectItem value="all">Todos los bancos</SelectItem>
-              {banks.map((bank) => <SelectItem key={bank.id} value={bank.id}>{bank.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-      </section>
+    <div className="mx-auto max-w-[1220px] px-5 py-14 sm:px-8 sm:py-16">
+      <div className="mb-10">
+        <h1 className="text-[42px] font-semibold text-white sm:text-[54px]">Explorar Tarjetas</h1>
+        <p className="mt-3 max-w-2xl text-[14px] leading-7 text-white/45">
+          Filtra por categoría, banco o nombre dentro de un catálogo limpio y directo, inspirado en la referencia que compartiste.
+        </p>
+      </div>
 
-      {loading ? <LoadingGrid /> : <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">{filteredCards.map((card) => <CreditCardCard key={card.id} card={card} />)}</div>}
+      <div className="mb-8 grid gap-3 md:grid-cols-3">
+        <Input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Buscar por tarjeta o banco"
+          className="h-11 rounded-none border-white/12 bg-[#080808] text-sm text-white placeholder:text-white/30"
+        />
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger className="h-11 rounded-none border-white/12 bg-[#080808] text-sm text-white">
+            <SelectValue placeholder="Categoría" />
+          </SelectTrigger>
+          <SelectContent className="rounded-none border-white/12 bg-[#080808] text-white">
+            <SelectItem value="all">Todas las categorías</SelectItem>
+            {CARD_CATEGORIES.map((item) => (
+              <SelectItem key={item} value={item}>
+                {categoryLabels[item]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={bankFilter} onValueChange={setBankFilter}>
+          <SelectTrigger className="h-11 rounded-none border-white/12 bg-[#080808] text-sm text-white">
+            <SelectValue placeholder="Banco" />
+          </SelectTrigger>
+          <SelectContent className="rounded-none border-white/12 bg-[#080808] text-white">
+            <SelectItem value="all">Todos los bancos</SelectItem>
+            {banks.map((bank) => (
+              <SelectItem key={bank.id} value={bank.id}>
+                {bank.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {loading ? <LoadingGrid /> : <div className="grid gap-4 lg:grid-cols-3">{filteredCards.map((card) => <CreditCardCard key={card.id} card={card} />)}</div>}
       {!loading && !filteredCards.length ? (
-        <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-8 text-center text-slate-300">No encontramos tarjetas con esos filtros.</div>
+        <div className="border border-white/8 bg-[#080808] p-8 text-sm text-white/45">No encontramos tarjetas con esos filtros.</div>
       ) : null}
     </div>
   );

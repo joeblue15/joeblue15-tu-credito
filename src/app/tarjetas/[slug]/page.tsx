@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 
 import { CardDetailPage } from "@/components/card-detail-page";
 import { banks, creditCards } from "@/lib/mock-data";
-import { stripHtml } from "@/lib/format";
 
 export async function generateStaticParams() {
   return creditCards.map((card) => ({ slug: card.slug }));
@@ -26,7 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     openGraph: {
       title: `${card.name} | ${bank.name}`,
       description: card.details.seoDescription,
-      images: [{ url: card.imageUrl, alt: card.name }],
+      images: [{ url: "/assets/placeholder.svg", alt: "placeholder" }],
     },
   };
 }

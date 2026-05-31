@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter } from "next/font/google";
 
 import { Providers } from "@/components/providers";
 import { SiteChrome } from "@/components/site-chrome";
@@ -11,38 +11,33 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   metadataBase: new URL("https://tucredito.vercel.app"),
   title: {
-    default: "TuCredito | Tarjetas de crédito en República Dominicana",
+    default: "TuCredito | Compara tarjetas en República Dominicana",
     template: "%s | TuCredito",
   },
-  description: "Explora, compara y recibe recomendaciones de tarjetas de crédito en República Dominicana con una experiencia fintech premium.",
+  description: "Decisiones financieras inteligentes sin el ruido. Compara beneficios, tasas y requisitos de las mejores tarjetas del mercado dominicano.",
   openGraph: {
     title: "TuCredito",
-    description: "Plataforma premium para explorar y comparar tarjetas de crédito de República Dominicana.",
+    description: "Explora y compara tarjetas de crédito en República Dominicana.",
     type: "website",
     url: "https://tucredito.vercel.app",
     siteName: "TuCredito",
-    images: [{ url: "/assets/cards-editorial.png", width: 1200, height: 900, alt: "TuCredito" }],
+    images: [{ url: "/assets/placeholder.svg", width: 400, height: 300, alt: "placeholder" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "TuCredito",
-    description: "Compara tarjetas de crédito en RD con diseño premium, IA y panel admin.",
-    images: ["/assets/cards-editorial.png"],
+    description: "Explora y compara tarjetas de crédito en República Dominicana.",
+    images: ["/assets/placeholder.svg"],
   },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className="dark" suppressHydrationWarning>
-      <body className={`${inter.variable} ${spaceGrotesk.variable} min-h-screen bg-background font-sans text-foreground antialiased`}>
+      <body className={`${inter.variable} min-h-screen bg-background text-foreground antialiased`}>
         <Providers>
           <SiteChrome>{children}</SiteChrome>
         </Providers>
