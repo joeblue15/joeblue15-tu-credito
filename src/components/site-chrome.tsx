@@ -1,5 +1,6 @@
 "use client";
 
+import { Bot, Home, Search, Scale } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -11,6 +12,13 @@ const navItems = [
   { href: "/tarjetas", label: "Explorar" },
   { href: "/comparar", label: "Comparar" },
   { href: "/ia", label: "Asesor IA" },
+];
+
+const mobileNavItems = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/tarjetas", label: "Explorar", icon: Search },
+  { href: "/comparar", label: "Comparar", icon: Scale },
+  { href: "/ia", label: "IA", icon: Bot },
 ];
 
 export function SiteChrome({ children }: { children: React.ReactNode }) {
@@ -47,7 +55,27 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
-      <main>{children}</main>
+      <main className="pb-24 md:pb-0">{children}</main>
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-black md:hidden">
+        <div className="grid grid-cols-4">
+          {mobileNavItems.map((item) => {
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex flex-col items-center gap-1 px-2 py-3 text-[10px] text-white/45 transition",
+                  active && "text-white"
+                )}
+              >
+                <item.icon className="size-4" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
       <footer className="border-t border-white/6">
         <div className="mx-auto flex max-w-[1220px] items-center justify-between gap-4 px-5 py-6 text-[10px] text-white/35 sm:px-8">
           <p>TuCredito. La plataforma definitiva de comparación financiera en RD.</p>
