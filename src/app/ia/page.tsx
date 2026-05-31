@@ -10,8 +10,8 @@ export default function IaPage() {
   return (
     <div className="mx-auto max-w-[1220px] px-5 py-14 sm:px-8 sm:py-16">
       <div className="mb-10">
-        <h1 className="text-[42px] font-semibold text-white sm:text-[54px]">Asesor IA</h1>
-        <p className="mt-3 max-w-2xl text-[14px] leading-7 text-white/45">
+        <h1 className="text-[42px] font-semibold text-foreground sm:text-[54px]">Asesor IA</h1>
+        <p className="mt-3 max-w-2xl text-[14px] leading-7 text-muted-foreground">
           Pregunta por cashback, viajes, anualidad o perfiles recomendados y obtén respuestas limpias con tarjetas reales del sistema.
         </p>
       </div>

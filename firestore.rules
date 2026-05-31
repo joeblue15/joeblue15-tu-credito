@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Public read for published content only
+    match /banks/{bankId} {
+      allow read: if true; // Read-only public
+      allow write: if request.auth != null && isAdmin();
+    }
+
+    match /credit_cards/{cardId} {
+      allow read: if resource.data.visibility in ['active', 'featured'];
+      allow write: if request.auth != null && isAdmin();
+    }
+
+    function isAdmin() {
+      return request.auth.token.email in [
+        'josephquezadaramirez@gmail.com',
+        'josephqr2007@gmail.com'
+      ];
+    }
+  }
+}

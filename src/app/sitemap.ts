@@ -2,8 +2,10 @@ import type { MetadataRoute } from "next";
 
 import { creditCards } from "@/lib/mock-data";
 
+export const dynamic = "force-static";
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://tucredito.vercel.app";
+  const baseUrl = "https://tucredito.me";
   const staticRoutes = ["", "/tarjetas", "/comparar", "/ia"];
 
   return [

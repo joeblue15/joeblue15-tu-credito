@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://tucredito.vercel.app"),
+  metadataBase: new URL("https://tucredito.me"),
   title: {
     default: "TuCredito | Compara tarjetas en República Dominicana",
     template: "%s | TuCredito",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     title: "TuCredito",
     description: "Explora y compara tarjetas de crédito en República Dominicana.",
     type: "website",
-    url: "https://tucredito.vercel.app",
+    url: "https://tucredito.me",
     siteName: "TuCredito",
     images: [{ url: "/assets/placeholder.svg", width: 400, height: 300, alt: "placeholder" }],
   },

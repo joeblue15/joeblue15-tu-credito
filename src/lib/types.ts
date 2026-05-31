@@ -63,6 +63,19 @@ export type CreditCardWithBank = CreditCard & {
   bank: Bank;
 };
 
+export type HomeSection = {
+  id: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  ctaLabel: string;
+  ctaHref: string;
+};
+
+export type HomeContent = {
+  sections: HomeSection[];
+};
+
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";

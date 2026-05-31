@@ -18,7 +18,7 @@ type AuthContextValue = {
   logout: () => Promise<void>;
 };
 
-const ADMIN_ALLOWLIST = ["admin@tucredito.do", "tucredito.rd@gmail.com"];
+const ADMIN_ALLOWLIST = ["josephquezadaramirez@gmail.com", "josephqr2007@gmail.com"];
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 

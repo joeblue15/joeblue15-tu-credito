@@ -33,8 +33,8 @@ export function CatalogBrowser() {
   return (
     <div className="mx-auto max-w-[1220px] px-5 py-14 sm:px-8 sm:py-16">
       <div className="mb-10">
-        <h1 className="text-[42px] font-semibold text-white sm:text-[54px]">Explorar Tarjetas</h1>
-        <p className="mt-3 max-w-2xl text-[14px] leading-7 text-white/45">
+        <h1 className="text-[42px] font-semibold text-foreground sm:text-[54px]">Explorar Tarjetas</h1>
+        <p className="mt-3 max-w-2xl text-[14px] leading-7 text-muted-foreground">
           Filtra por categoría, banco o nombre dentro de un catálogo limpio y directo, inspirado en la referencia que compartiste.
         </p>
       </div>
@@ -44,13 +44,13 @@ export function CatalogBrowser() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Buscar por tarjeta o banco"
-          className="h-11 rounded-none border-white/12 bg-[#080808] text-sm text-white placeholder:text-white/30"
+          className="h-11 rounded-none border-border bg-card text-sm text-foreground placeholder:text-muted-foreground"
         />
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="h-11 rounded-none border-white/12 bg-[#080808] text-sm text-white">
+          <SelectTrigger className="h-11 rounded-none border-border bg-card text-sm text-foreground">
             <SelectValue placeholder="Categoría" />
           </SelectTrigger>
-          <SelectContent className="rounded-none border-white/12 bg-[#080808] text-white">
+          <SelectContent className="rounded-none border-border bg-card text-foreground">
             <SelectItem value="all">Todas las categorías</SelectItem>
             {CARD_CATEGORIES.map((item) => (
               <SelectItem key={item} value={item}>
@@ -60,10 +60,10 @@ export function CatalogBrowser() {
           </SelectContent>
         </Select>
         <Select value={bankFilter} onValueChange={setBankFilter}>
-          <SelectTrigger className="h-11 rounded-none border-white/12 bg-[#080808] text-sm text-white">
+          <SelectTrigger className="h-11 rounded-none border-border bg-card text-sm text-foreground">
             <SelectValue placeholder="Banco" />
           </SelectTrigger>
-          <SelectContent className="rounded-none border-white/12 bg-[#080808] text-white">
+          <SelectContent className="rounded-none border-border bg-card text-foreground">
             <SelectItem value="all">Todos los bancos</SelectItem>
             {banks.map((bank) => (
               <SelectItem key={bank.id} value={bank.id}>
@@ -76,7 +76,7 @@ export function CatalogBrowser() {
 
       {loading ? <LoadingGrid /> : <div className="grid gap-4 lg:grid-cols-3">{filteredCards.map((card) => <CreditCardCard key={card.id} card={card} />)}</div>}
       {!loading && !filteredCards.length ? (
-        <div className="border border-white/8 bg-[#080808] p-8 text-sm text-white/45">No encontramos tarjetas con esos filtros.</div>
+        <div className="surface p-8 text-sm text-muted-foreground">No encontramos tarjetas con esos filtros.</div>
       ) : null}
     </div>
   );

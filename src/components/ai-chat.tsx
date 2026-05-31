@@ -55,15 +55,15 @@ export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-      <section className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.04] shadow-[0_20px_80px_rgba(0,0,0,0.28)]">
-        <div className="border-b border-white/10 px-5 py-4 sm:px-6">
+      <section className="overflow-hidden border border-border bg-card">
+        <div className="border-b border-border px-5 py-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-primary/20 p-2 text-primary">
+            <div className="border border-border bg-background p-2 text-foreground">
               <Bot className="size-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">Asistente IA</h2>
-              <p className="text-sm text-slate-400">Estilo chat para recomendación y comparación de tarjetas reales.</p>
+              <h2 className="text-lg font-semibold text-foreground">Asistente IA</h2>
+              <p className="text-sm text-muted-foreground">Estilo chat para recomendación y comparación de tarjetas reales.</p>
             </div>
           </div>
         </div>
@@ -80,11 +80,11 @@ export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
                     className={`flex ${isAssistant ? "justify-start" : "justify-end"}`}
                   >
                     <div
-                      className={`max-w-[88%] rounded-[26px] px-4 py-3 text-sm leading-7 shadow-[0_12px_40px_rgba(0,0,0,0.18)] sm:max-w-[75%] ${
-                        isAssistant ? "border border-white/10 bg-[#141525] text-slate-100" : "bg-primary text-primary-foreground"
+                      className={`max-w-[88%] px-4 py-3 text-sm leading-7 sm:max-w-[75%] ${
+                        isAssistant ? "border border-border bg-background text-foreground" : "bg-foreground text-background"
                       }`}
                     >
-                      <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-slate-400">
+                      <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                         {isAssistant ? <Bot className="size-3.5" /> : <User2 className="size-3.5" />}
                         {isAssistant ? "TuCredito IA" : "Tú"}
                       </div>
@@ -98,7 +98,7 @@ export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
                               <Link
                                 key={slug}
                                 href={`/tarjetas/${slug}`}
-                                className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                                className="border border-border px-3 py-1 text-xs font-medium text-foreground"
                               >
                                 {card.name}
                               </Link>
@@ -112,55 +112,55 @@ export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
               })}
             </AnimatePresence>
           </div>
-          <form onSubmit={onSubmit} className="border-t border-white/10 bg-black/10 p-4 sm:p-5">
-            <div className="flex items-end gap-3 rounded-[26px] border border-white/10 bg-white/5 p-2 pl-4">
+          <form onSubmit={onSubmit} className="border-t border-border bg-background p-4 sm:p-5">
+            <div className="flex items-end gap-3 border border-border bg-card p-2 pl-4">
               <Input
                 {...form.register("message")}
                 placeholder="Ej: quiero una tarjeta para viajar y salas VIP"
-                className="h-12 border-0 bg-transparent px-0 text-base text-white placeholder:text-slate-500 focus-visible:ring-0"
+                className="h-12 border-0 bg-transparent px-0 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-0"
               />
-              <Button type="submit" className="h-12 rounded-[20px] bg-primary px-5 text-primary-foreground hover:bg-primary/90">
+              <Button type="submit" className="h-12 rounded-none bg-foreground px-5 text-background hover:bg-foreground/90">
                 <SendHorizonal className="size-4" />
                 Enviar
               </Button>
             </div>
             {form.formState.errors.message ? (
-              <p className="mt-2 text-sm text-red-300">{form.formState.errors.message.message}</p>
+              <p className="mt-2 text-sm text-red-500">{form.formState.errors.message.message}</p>
             ) : null}
           </form>
         </div>
       </section>
       <aside className="space-y-4">
-        <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-5">
+        <div className="surface p-5">
           <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-2xl bg-primary/20 p-2 text-primary">
+            <div className="border border-border bg-background p-2 text-foreground">
               <Sparkles className="size-5" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">Cómo usar la IA</h3>
-              <p className="text-sm text-slate-400">Haz preguntas naturales y te devuelve tarjetas reales.</p>
+              <h3 className="font-semibold text-foreground">Cómo usar la IA</h3>
+              <p className="text-sm text-muted-foreground">Haz preguntas naturales y te devuelve tarjetas reales.</p>
             </div>
           </div>
-          <div className="space-y-3 text-sm text-slate-300">
+          <div className="space-y-3 text-sm text-foreground/75">
             <p>• “Quiero cashback para gasto diario”.</p>
-            <p>• “Compárame BHD Infinite Rewards con Popular Black Cashback”.</p>
+            <p>• “Compárame una tarjeta premium con una cashback”.</p>
             <p>• “Busco algo con aprobación más accesible”.</p>
           </div>
         </div>
-        <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-5">
-          <h3 className="mb-4 font-semibold text-white">Tarjetas más consultadas</h3>
+        <div className="surface p-5">
+          <h3 className="mb-4 font-semibold text-foreground">Tarjetas más consultadas</h3>
           <div className="space-y-3">
             {cards.slice(0, 4).map((card) => (
               <Link
                 key={card.id}
                 href={`/tarjetas/${card.slug}`}
-                className="flex items-center justify-between rounded-[22px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-primary/30"
+                className="flex items-center justify-between border border-border px-4 py-3 text-sm text-foreground transition hover:border-foreground/30"
               >
                 <span>
-                  <strong className="block text-white">{card.name}</strong>
-                  <span className="text-slate-400">{card.bank.name}</span>
+                  <strong className="block text-foreground">{card.name}</strong>
+                  <span className="text-muted-foreground">{card.bank.name}</span>
                 </span>
-                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">Ver</span>
+                <span className="border border-border px-3 py-1 text-xs text-foreground">Ver</span>
               </Link>
             ))}
           </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { BrandLogo } from "@/components/brand-logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +27,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-white/6">
+      <header className="border-b border-border">
         <div className="mx-auto flex max-w-[1220px] items-center justify-between gap-4 px-5 py-5 sm:px-8">
           <div className="flex items-center gap-8 lg:gap-10">
             <BrandLogo />
@@ -36,8 +37,8 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "text-[12px] text-white/70 transition hover:text-white",
-                    pathname === item.href && "text-white"
+                    "text-[12px] text-muted-foreground transition hover:text-foreground",
+                    pathname === item.href && "text-foreground"
                   )}
                 >
                   {item.label}
@@ -46,17 +47,18 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/admin" className="hidden text-[11px] text-white/55 transition hover:text-white md:inline-block">
+            <ThemeToggle className="hidden md:flex" />
+            <Link href="/admin" className="hidden text-[11px] text-muted-foreground transition hover:text-foreground md:inline-block">
               Admin
             </Link>
-            <Button asChild className="h-8 rounded-none border border-white bg-white px-3 text-[11px] font-medium text-black hover:bg-white/90">
+            <Button asChild className="h-8 rounded-none border border-foreground bg-foreground px-3 text-[11px] font-medium text-background hover:bg-foreground/90">
               <Link href="/ia">Preguntar a IA</Link>
             </Button>
           </div>
         </div>
       </header>
       <main className="pb-24 md:pb-0">{children}</main>
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-black md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background md:hidden">
         <div className="grid grid-cols-4">
           {mobileNavItems.map((item) => {
             const active = pathname === item.href;
@@ -65,8 +67,8 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-1 px-2 py-3 text-[10px] text-white/45 transition",
-                  active && "text-white"
+                  "flex flex-col items-center gap-1 px-2 py-3 text-[10px] text-muted-foreground transition",
+                  active && "text-foreground"
                 )}
               >
                 <item.icon className="size-4" />
@@ -75,11 +77,14 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             );
           })}
         </div>
+        <div className="border-t border-border p-2">
+          <ThemeToggle />
+        </div>
       </nav>
-      <footer className="border-t border-white/6">
-        <div className="mx-auto flex max-w-[1220px] items-center justify-between gap-4 px-5 py-6 text-[10px] text-white/35 sm:px-8">
+      <footer className="border-t border-border">
+        <div className="mx-auto flex max-w-[1220px] items-center justify-between gap-4 px-5 py-6 text-[10px] text-muted-foreground sm:px-8">
           <p>TuCredito. La plataforma definitiva de comparación financiera en RD.</p>
-          <span className="text-white/55">Powered by TuCredito →</span>
+          <span className="text-foreground/60">Powered by TuCredito →</span>
         </div>
       </footer>
     </div>

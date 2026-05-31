@@ -7,8 +7,10 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { AdminHomeContent } from "@/components/admin-home-content";
 import { RichTextEditor } from "@/components/rich-text-editor";
 import { Button } from "@/components/ui/button";
+
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/auth-context";
 import { useCatalogData } from "@/hooks/use-catalog-data";
 import { deleteBank, deleteCreditCard, saveBank, saveCreditCard } from "@/lib/firestore";
+import { banks as demoBanks, creditCards as demoCards } from "@/lib/mock-data";
 import { slugify } from "@/lib/format";
 import { CARD_CATEGORIES } from "@/lib/types";
 import type { Bank, CreditCard } from "@/lib/types";
@@ -120,6 +123,24 @@ export function AdminDashboard() {
     }),
     [cards]
   );
+
+  async function importDemoData() {
+    try {
+      // Importar bancos
+      for (const bank of demoBanks) {
+        await saveBank(bank);
+      }
+      // Importar tarjetas
+      for (const card of demoCards) {
+        await saveCreditCard(card);
+      }
+      setBanks(demoBanks);
+      setCards(demoCards);
+      toast.success("Datos demo importados");
+    } catch (e) {
+      toast.error("No se pudo importar la data demo");
+    }
+  }
 
   useEffect(() => {
     if (!bankEditorId) {
@@ -305,6 +326,7 @@ export function AdminDashboard() {
         <TabsList className="rounded-full border border-white/10 bg-white/5 p-1">
           <TabsTrigger value="cards" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">Tarjetas</TabsTrigger>
           <TabsTrigger value="banks" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">Bancos</TabsTrigger>
+          <TabsTrigger value="home" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">Home</TabsTrigger>
           <TabsTrigger value="overview" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">Resumen</TabsTrigger>
         </TabsList>
 
@@ -481,7 +503,12 @@ export function AdminDashboard() {
           </form>
         </TabsContent>
 
+        <TabsContent value="home">
+          <AdminHomeContent />
+        </TabsContent>
+
         <TabsContent value="overview" className="grid gap-6 xl:grid-cols-3">
+
           <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6">
             <Landmark className="mb-4 size-8 text-primary" />
             <h3 className="text-xl font-semibold text-white">{banks.length} bancos</h3>
@@ -503,7 +530,10 @@ export function AdminDashboard() {
                 <h3 className="text-xl font-semibold text-white">Sincronización</h3>
                 <p className="text-sm text-slate-400">Refresca la data remota de Firestore cuando lo necesites.</p>
               </div>
-              <Button variant="outline" onClick={() => refresh()} className="rounded-full border-white/10 bg-white/5 text-white hover:bg-white/10">Refrescar contenido</Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => refresh()} className="rounded-full border-white/10 bg-white/5 text-white hover:bg-white/10">Refrescar contenido</Button>
+                <Button variant="outline" onClick={importDemoData} className="rounded-full border-primary/20 bg-primary/10 text-primary hover:bg-primary/15">Importar datos demo</Button>
+              </div>
             </div>
             <p className="text-sm leading-7 text-slate-300">El frontend consume datos y el panel administra bancos y tarjetas mediante Firestore. Storage queda limitado a URLs externas en los formularios, como pediste.</p>
           </div>

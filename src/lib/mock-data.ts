@@ -1,4 +1,4 @@
-import type { Bank, CardCategory, CreditCard } from "@/lib/types";
+import type { Bank, CardCategory, CreditCard, HomeContent } from "@/lib/types";
 
 export const categoryLabels: Record<CardCategory, string> = {
   cashback: "Cashback",
@@ -9,6 +9,29 @@ export const categoryLabels: Record<CardCategory, string> = {
   estudiante: "Estudiante",
   retail: "Retail",
   familia: "Familia",
+};
+
+export const defaultHomeContent: HomeContent = {
+  sections: [
+    {
+      id: "section-1",
+      eyebrow: "Guías rápidas",
+      title: "Empieza comparando según tu estilo de gasto",
+      description:
+        "Si gastas más en supermercado, viajes o negocio, puedes ir directo al catálogo filtrado y evitar ruido innecesario.",
+      ctaLabel: "Ir al catálogo",
+      ctaHref: "/tarjetas",
+    },
+    {
+      id: "section-2",
+      eyebrow: "Ayuda personalizada",
+      title: "No sabes cuál elegir? Usa el asesor inteligente",
+      description:
+        "Haz una pregunta natural y recibe una recomendación clara usando solo tarjetas reales disponibles en TuCredito.",
+      ctaLabel: "Abrir IA",
+      ctaHref: "/ia",
+    },
+  ],
 };
 
 export const banks: Bank[] = [

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { CatalogBrowser } from "@/components/catalog-browser";
 
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function TarjetasPage() {
-  return <CatalogBrowser />;
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-[1220px] px-5 py-14 sm:px-8 sm:py-16 text-white/50">Cargando tarjetas...</div>}>
+      <CatalogBrowser />
+    </Suspense>
+  );
 }
