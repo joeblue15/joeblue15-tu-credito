@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileJson, Landmark, LogIn, Plus, ShieldAlert, Sparkles, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -101,6 +101,9 @@ export function AdminDashboard() {
   const [cardEditorId, setCardEditorId] = useState<string | null>(null);
   const [advancedMode, setAdvancedMode] = useState(false);
   const [jsonValue, setJsonValue] = useState("");
+  const [savingBank, setSavingBank] = useState(false);
+  const [savingCard, setSavingCard] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const bankForm = useForm<BankFormValues>({
     resolver: zodResolver(bankSchema),
@@ -199,50 +202,64 @@ export function AdminDashboard() {
   }, [cardForm]);
 
   const saveBankHandler = bankForm.handleSubmit(async (values) => {
-    const payload: Bank = { ...values, slug: values.slug || slugify(values.name) };
-    await saveBank(payload);
-    setBanks((current) => {
-      const exists = current.some((item) => item.id === payload.id);
-      return exists ? current.map((item) => (item.id === payload.id ? payload : item)) : [payload, ...current];
-    });
-    setBankEditorId(payload.id);
-    toast.success("Banco guardado");
+    try {
+      setSavingBank(true);
+      const payload: Bank = { ...values, slug: values.slug || slugify(values.name) };
+      await saveBank(payload);
+      setBanks((current) => {
+        const exists = current.some((item) => item.id === payload.id);
+        return exists ? current.map((item) => (item.id === payload.id ? payload : item)) : [payload, ...current];
+      });
+      setBankEditorId(payload.id);
+      toast.success("Banco guardado");
+    } catch (e) {
+      toast.error("No se pudo guardar el banco");
+    } finally {
+      setSavingBank(false);
+    }
   });
 
   const saveCardHandler = cardForm.handleSubmit(async (values) => {
-    const payload: CreditCard = {
-      id: values.id,
-      bankId: values.bankId,
-      name: values.name,
-      slug: values.slug || slugify(values.name),
-      category: values.category,
-      imageUrl: values.imageUrl,
-      description: values.description,
-      benefits: values.benefits.map((item) => item.value),
-      requirements: values.requirements.map((item) => item.value),
-      details: {
-        annualFee: values.annualFee,
-        minIncome: values.minIncome,
-        currency: values.currency,
-        approvalLevel: values.approvalLevel,
-        highlight: values.highlight,
-        idealProfile: values.idealProfile,
-        seoDescription: values.seoDescription,
-      },
-      featured: values.featured,
-      active: values.active,
-      visibility: values.visibility,
-      createdAt: cards.find((item) => item.id === values.id)?.createdAt ?? new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    try {
+      setSavingCard(true);
+      const payload: CreditCard = {
+        id: values.id,
+        bankId: values.bankId,
+        name: values.name,
+        slug: values.slug || slugify(values.name),
+        category: values.category,
+        imageUrl: values.imageUrl,
+        description: values.description,
+        benefits: values.benefits.map((item) => item.value),
+        requirements: values.requirements.map((item) => item.value),
+        details: {
+          annualFee: values.annualFee,
+          minIncome: values.minIncome,
+          currency: values.currency,
+          approvalLevel: values.approvalLevel,
+          highlight: values.highlight,
+          idealProfile: values.idealProfile,
+          seoDescription: values.seoDescription,
+        },
+        featured: values.featured,
+        active: values.active,
+        visibility: values.visibility,
+        createdAt: cards.find((item) => item.id === values.id)?.createdAt ?? new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-    await saveCreditCard(payload);
-    setCards((current) => {
-      const exists = current.some((item) => item.id === payload.id);
-      return exists ? current.map((item) => (item.id === payload.id ? payload : item)) : [payload, ...current];
-    });
-    setCardEditorId(payload.id);
-    toast.success("Tarjeta guardada");
+      await saveCreditCard(payload);
+      setCards((current) => {
+        const exists = current.some((item) => item.id === payload.id);
+        return exists ? current.map((item) => (item.id === payload.id ? payload : item)) : [payload, ...current];
+      });
+      setCardEditorId(payload.id);
+      toast.success("Tarjeta guardada");
+    } catch (e) {
+      toast.error("No se pudo guardar la tarjeta");
+    } finally {
+      setSavingCard(false);
+    }
   });
 
   const applyJsonMode = () => {
@@ -355,9 +372,13 @@ export function AdminDashboard() {
                         variant="outline"
                         size="sm"
                         onClick={async () => {
-                          await deleteCreditCard(card.id);
-                          setCards((current) => current.filter((item) => item.id !== card.id));
-                          toast.success("Tarjeta eliminada");
+                          try {
+                            await deleteCreditCard(card.id);
+                            setCards((current) => current.filter((item) => item.id !== card.id));
+                            toast.success("Tarjeta eliminada");
+                          } catch {
+                            toast.error("No se pudo eliminar la tarjeta");
+                          }
                         }}
                         className="rounded-full border-red-500/20 bg-red-500/10 text-red-200 hover:bg-red-500/15"
                       >
@@ -374,10 +395,14 @@ export function AdminDashboard() {
                         key={action.label}
                         type="button"
                         onClick={async () => {
-                          const next = { ...card, [action.field]: action.value, updatedAt: new Date().toISOString() } as CreditCard;
-                          await saveCreditCard(next);
-                          setCards((current) => current.map((item) => (item.id === card.id ? next : item)));
-                          toast.success("Estado actualizado");
+                          try {
+                            const next = { ...card, [action.field]: action.value, updatedAt: new Date().toISOString() } as CreditCard;
+                            await saveCreditCard(next);
+                            setCards((current) => current.map((item) => (item.id === card.id ? next : item)));
+                            toast.success("Estado actualizado");
+                          } catch {
+                            toast.error("No se pudo actualizar el estado");
+                          }
                         }}
                         className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-xs font-medium text-slate-200"
                       >
@@ -437,7 +462,9 @@ export function AdminDashboard() {
                   <ToggleField label="Featured" pressed={cardForm.watch("featured")} onChange={(value) => cardForm.setValue("featured", value)} />
                 </div>
                 <div className="xl:col-span-2 flex justify-end">
-                  <Button type="submit" className="rounded-full bg-primary px-6 text-primary-foreground hover:bg-primary/90">Guardar tarjeta</Button>
+                  <Button type="submit" disabled={savingCard} className="rounded-full bg-primary px-6 text-primary-foreground hover:bg-primary/90">
+                    {savingCard ? "Guardando..." : "Guardar tarjeta"}
+                  </Button>
                 </div>
               </form>
             )}
@@ -498,7 +525,9 @@ export function AdminDashboard() {
             </div>
             <ToggleField label="Banco featured" pressed={bankForm.watch("featured")} onChange={(value) => bankForm.setValue("featured", value)} />
             <div className="flex justify-end">
-              <Button type="submit" className="rounded-full bg-primary px-6 text-primary-foreground hover:bg-primary/90">Guardar banco</Button>
+              <Button type="submit" disabled={savingBank} className="rounded-full bg-primary px-6 text-primary-foreground hover:bg-primary/90">
+                {savingBank ? "Guardando..." : "Guardar banco"}
+              </Button>
             </div>
           </form>
         </TabsContent>
@@ -533,6 +562,32 @@ export function AdminDashboard() {
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => refresh()} className="rounded-full border-white/10 bg-white/5 text-white hover:bg-white/10">Refrescar contenido</Button>
                 <Button variant="outline" onClick={importDemoData} className="rounded-full border-primary/20 bg-primary/10 text-primary hover:bg-primary/15">Importar datos demo</Button>
+                <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+                    const importedBanks: Bank[] = data.banks || data.Banks || [];
+                    const importedCards: CreditCard[] = data.credit_cards || data.cards || [];
+                    for (const bank of importedBanks) {
+                      await saveBank(bank);
+                    }
+                    for (const card of importedCards) {
+                      await saveCreditCard(card);
+                    }
+                    if (importedBanks.length) setBanks(importedBanks);
+                    if (importedCards.length) setCards(importedCards);
+                    toast.success("Importación desde JSON completada");
+                  } catch (err) {
+                    toast.error("No se pudo importar el JSON");
+                  } finally {
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }
+                }} />
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="rounded-full border-primary/20 bg-primary/10 text-primary hover:bg-primary/15">
+                  Importar JSON
+                </Button>
               </div>
             </div>
             <p className="text-sm leading-7 text-slate-300">El frontend consume datos y el panel administra bancos y tarjetas mediante Firestore. Storage queda limitado a URLs externas en los formularios, como pediste.</p>
