@@ -14,47 +14,35 @@ export function CreditCardCard({ card }: { card: CreditCardWithBank }) {
     : card.bank.name.includes("BHD")
       ? "BHD"
       : "BAN";
-  const hasRealPreview = card.imageUrl && card.imageUrl !== "/assets/placeholder.svg";
 
   return (
     <article className="surface p-4 md:p-5">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground">{bankMark}</div>
-        <span className="border border-border px-2 py-1 text-[9px] text-muted-foreground">
-          {getCategoryLabel(card.category)}
-        </span>
-      </div>
-
-      <div className="mb-5 border border-border bg-background p-2.5">
-        {hasRealPreview ? (
-          <img
-            src={card.imageUrl}
-            alt={card.name}
-            className="aspect-[1.7/1] w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="aspect-[1.7/1] border border-border bg-foreground px-3 py-2 text-background">
-            <div className="flex h-full flex-col justify-between">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[8px] uppercase tracking-[0.22em] text-background/70">{bankMark}</p>
-                  <p className="mt-2 line-clamp-2 text-[12px] font-semibold leading-tight">{card.name}</p>
-                </div>
-                <div className="h-6 w-9 border border-background/20 bg-background/10" />
+      <div className="mb-5 border border-border bg-background p-3">
+        <div className="aspect-[1.58/1] border border-border bg-foreground px-4 py-3 text-background">
+          <div className="flex h-full flex-col justify-between">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[9px] uppercase tracking-[0.22em] text-background/70">{bankMark}</p>
+                <p className="mt-3 text-[15px] font-semibold leading-tight">{card.name}</p>
               </div>
-              <div className="flex items-end justify-between gap-3">
-                <div>
-                  <p className="text-[8px] uppercase tracking-[0.18em] text-background/50">Banco</p>
-                  <p className="mt-1 line-clamp-1 text-[10px] text-background/78">{card.bank.name}</p>
-                </div>
-                <span className="text-[8px] uppercase tracking-[0.18em] text-background/55">
-                  {getCategoryLabel(card.category)}
-                </span>
+              <span className="border border-background/20 px-2 py-1 text-[9px] uppercase tracking-[0.16em] text-background/70">
+                {getCategoryLabel(card.category)}
+              </span>
+            </div>
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[9px] uppercase tracking-[0.18em] text-background/50">Banco</p>
+                <p className="mt-1 text-[11px] text-background/80">{card.bank.name}</p>
               </div>
+              <div className="h-8 w-12 border border-background/20 bg-background/10" />
             </div>
           </div>
-        )}
+        </div>
+      </div>
+
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground">{bankMark}</div>
+        <span className="border border-border px-2 py-1 text-[9px] text-muted-foreground">{getCategoryLabel(card.category)}</span>
       </div>
 
       <h3 className="text-[18px] font-semibold text-foreground">{card.name}</h3>
