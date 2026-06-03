@@ -9,6 +9,10 @@ export default function robots(): MetadataRoute.Robots {
       allow: ["/", "/tarjetas", "/comparar", "/ia"],
       disallow: ["/admin"],
     },
-    sitemap: "https://tucredito.me/sitemap.xml",
+    sitemap: [
+      "https://tucredito.me/sitemap.xml",
+      // Live sitemap served by Cloudflare Worker (fetches Firestore via REST)
+      "https://tucredito-ai.ramirezquezadajoe.workers.dev/sitemap.xml",
+    ],
   };
 }

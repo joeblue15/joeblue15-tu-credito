@@ -11,7 +11,9 @@ import { useHomeContent } from "@/hooks/use-home-content";
 export function HomePage() {
   const { cardsWithBanks, loading } = useCatalogData();
   const { content } = useHomeContent();
-  const featuredCards = cardsWithBanks.filter((card) => card.featured && card.active).slice(0, 3);
+  const featuredCards = cardsWithBanks
+    .filter((card) => (card.featured || card.visibility === "featured") && card.active)
+    .slice(0, 3);
 
   return (
     <div>
@@ -31,7 +33,6 @@ export function HomePage() {
           </Button>
         </div>
       </section>
-
       <section className="border-y border-border py-14 sm:py-16">
         <div className="mx-auto max-w-[1220px] px-5 sm:px-8">
           <div className="mb-10 flex items-end justify-between gap-4">

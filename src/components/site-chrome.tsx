@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 
 import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
+  { href: "/", label: "Inicio" },
   { href: "/tarjetas", label: "Explorar" },
   { href: "/comparar", label: "Comparar" },
   { href: "/ia", label: "Asesor IA" },
@@ -51,9 +51,13 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             <Link href="/admin" className="hidden text-[11px] text-muted-foreground transition hover:text-foreground md:inline-block">
               Admin
             </Link>
-            <Button asChild className="h-8 rounded-none border border-foreground bg-foreground px-3 text-[11px] font-medium text-background hover:bg-foreground/90">
-              <Link href="/ia">Preguntar a IA</Link>
-            </Button>
+            <Link href="/ia" className="ia-cyber text-[10px]">
+              <span className="ia-edge ia-edge-top" aria-hidden="true" />
+              <span className="ia-edge ia-edge-right" aria-hidden="true" />
+              <span className="ia-edge ia-edge-bottom" aria-hidden="true" />
+              <span className="ia-edge ia-edge-left" aria-hidden="true" />
+              <span className="ia-label">Preguntar a IA</span>
+            </Link>
           </div>
         </div>
       </header>
@@ -77,14 +81,14 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             );
           })}
         </div>
-        <div className="border-t border-border p-2">
-          <ThemeToggle />
-        </div>
       </nav>
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-[1220px] items-center justify-between gap-4 px-5 py-6 text-[10px] text-muted-foreground sm:px-8">
           <p>TuCredito. La plataforma definitiva de comparación financiera en RD.</p>
-          <span className="text-foreground/60">Powered by TuCredito →</span>
+          <div className="flex items-center gap-4">
+            <Link href="/privacidad" className="hover:text-foreground">Privacidad</Link>
+            <Link href="/terminos" className="hover:text-foreground">Términos</Link>
+          </div>
         </div>
       </footer>
     </div>

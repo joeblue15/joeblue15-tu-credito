@@ -40,3 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .dyad/
+
+# local development caches
+.firebase/
+.pnpm-store/
+functions/node_modules/
+**/node_modules/
+cloudflare/

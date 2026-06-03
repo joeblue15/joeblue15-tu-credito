@@ -6,9 +6,7 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "rewrites": [
-      { "source": "**", "destination": "/index.html" }
-    ],
+    "cleanUrls": true,
     "headers": [
       {
         "source": "**/*.{css,js}",
@@ -16,7 +14,17 @@
           { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
         ]
       }
+    ],
+    "rewrites": [
+      { "source": "/favicon.ico", "destination": "/brand/general-profile-picture.png" }
+    ],
+    "redirects": [
+      { "source": "/favicon.ico", "destination": "/brand/general-profile-picture.png", "type": 308 },
+      { "source": "/sitemap.xml", "destination": "https://tucredito-ai.ramirezquezadajoe.workers.dev/sitemap.xml", "type": 308 }
     ]
+  },
+  "functions": {
+    "source": "functions"
   },
   "firestore": {
     "rules": "firestore.rules",

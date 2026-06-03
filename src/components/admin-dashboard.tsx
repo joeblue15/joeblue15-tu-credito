@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileJson, Landmark, LogIn, Plus, ShieldAlert, Sparkles, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -60,7 +60,7 @@ type CardFormValues = z.infer<typeof cardSchema>;
 
 function createEmptyBank(): BankFormValues {
   return {
-    id: crypto.randomUUID(),
+    id: (globalThis.crypto as any)?.randomUUID?.() ?? `id-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     name: "",
     slug: "",
     logoUrl: "/assets/placeholder.svg",
@@ -71,7 +71,7 @@ function createEmptyBank(): BankFormValues {
 
 function createEmptyCard(bankId?: string): CardFormValues {
   return {
-    id: crypto.randomUUID(),
+    id: (globalThis.crypto as any)?.randomUUID?.() ?? `id-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     name: "",
     slug: "",
     bankId: bankId ?? "",
@@ -96,11 +96,15 @@ function createEmptyCard(bankId?: string): CardFormValues {
 export function AdminDashboard() {
   const isMobile = useIsMobile();
   const { user, loading, isAuthorizedAdmin, loginWithGoogle, logout } = useAuth();
-  const { banks, cards, refresh, setBanks, setCards } = useCatalogData();
+  const { banks, cards, refresh, setBanks, setCards } = useCatalogData({ includeDrafts: true });
   const [bankEditorId, setBankEditorId] = useState<string | null>(null);
   const [cardEditorId, setCardEditorId] = useState<string | null>(null);
   const [advancedMode, setAdvancedMode] = useState(false);
   const [jsonValue, setJsonValue] = useState("");
+  const [savingBank, setSavingBank] = useState(false);
+  const [savingCard, setSavingCard] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [editorReady, setEditorReady] = useState(false);
 
   const bankForm = useForm<BankFormValues>({
     resolver: zodResolver(bankSchema),
@@ -124,6 +128,18 @@ export function AdminDashboard() {
     [cards]
   );
 
+  const isDirty = bankForm.formState.isDirty || cardForm.formState.isDirty;
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
   async function importDemoData() {
     try {
       // Importar bancos
@@ -139,6 +155,95 @@ export function AdminDashboard() {
       toast.success("Datos demo importados");
     } catch (e) {
       toast.error("No se pudo importar la data demo");
+    }
+  }
+
+  async function importPopularBhdData() {
+    try {
+      const mod = await import("@/lib/datasets/popular-bhd");
+      const grouped: any = mod.default;
+
+      const all: any[] = [];
+      for (const [key, arr] of Object.entries(grouped)) {
+        if (Array.isArray(arr)) {
+          for (const item of arr) all.push({ ...item, bankSlug: (item as any).bankSlug || String(key).toLowerCase() });
+        }
+      }
+
+      const slugs = Array.from(new Set(all.map((c) => String((c as any).bankSlug || "").toLowerCase()).filter(Boolean)));
+      const importedBanks: Bank[] = slugs.map((slug) => ({ id: slug, name: slug.toUpperCase(), slug, logoUrl: "/assets/placeholder.svg", description: `Entidad bancaria ${slug.toUpperCase()}` , featured: false }));
+
+      const mapApproval: (arg?: string) => CreditCard["details"]["approvalLevel"] = (v?: string) => {
+        const x = (v || "").toLowerCase().replace(/\s|-/g, "");
+        if (x.includes("alta") || x === "alto") return "alto";
+        if (x.includes("muybaja") || x === "baja") return "bajo";
+        if (x.includes("mediabaja") || x.includes("media")) return "medio";
+        return "medio";
+      };
+
+      const mapCurrency: (arg?: string) => CreditCard["details"]["currency"] = (v?: string) => {
+        const x = (v || "").toUpperCase();
+        if (x.includes("USD") || x.includes("US$")) return "USD";
+        return "DOP";
+      };
+
+      const mapCategory: (arg?: string) => CardFormValues["category"] = (v?: string) => {
+        const x = (v || "").toLowerCase();
+        if (x.includes("cash")) return "cashback";
+        if (x.includes("viaj")) return "viajes";
+        if (x.includes("prem")) return "premium";
+        if (x.includes("negoc")) return "negocios";
+        return "clásica";
+      };
+
+      const ensureArray = (val: any) => Array.isArray(val) ? val.map((it) => (typeof it === "string" ? it : (it?.text ?? ""))).filter((s) => s && typeof s === "string") : [];
+      const now = new Date().toISOString();
+
+      const importedCards: CreditCard[] = all.map((item) => {
+        const name = (item as any).name ?? "Tarjeta";
+        const slug = (item as any).slug || slugify(name);
+        const bankSlug = String((item as any).bankSlug || "").toLowerCase();
+        const details = {
+          annualFee: String((item as any).annualFee ?? ""),
+          minIncome: String((item as any).incomeMin ?? ""),
+          currency: mapCurrency((item as any).currency),
+          approvalLevel: mapApproval((item as any).approval),
+          highlight: (item as any).highlight ?? "",
+          idealProfile: (item as any).idealFor ?? "",
+          seoDescription: (item as any).seoDescription ?? "",
+        } as CreditCard["details"];
+
+        const card: CreditCard = {
+          id: String((item as any).id || crypto.randomUUID()),
+          bankId: bankSlug,
+          name,
+          slug,
+          category: mapCategory((item as any).type),
+          imageUrl: String((item as any).logo || "/assets/placeholder.svg"),
+          description: (item as any).description || `<p>${details.highlight}</p>`,
+          benefits: ensureArray((item as any).benefits),
+          requirements: ensureArray((item as any).requirements),
+          details,
+          featured: Boolean((item as any).featured) || false,
+          active: (item as any).active !== false,
+          visibility: ((item as any).visibility as any) === "featured" ? "featured" : "active",
+          createdAt: now,
+          updatedAt: now,
+        };
+        return card;
+      });
+
+      for (const bank of importedBanks) {
+        await saveBank(bank);
+      }
+      for (const card of importedCards) {
+        await saveCreditCard(card);
+      }
+      if (importedBanks.length) setBanks(importedBanks);
+      if (importedCards.length) setCards(importedCards);
+      toast.success("Importación Popular+BHD completada");
+    } catch {
+      toast.error("No se pudo importar Popular+BHD");
     }
   }
 
@@ -198,51 +303,70 @@ export function AdminDashboard() {
     return () => subscription.unsubscribe();
   }, [cardForm]);
 
+  useEffect(() => {
+    const id = setTimeout(() => setEditorReady(true), 0);
+    return () => clearTimeout(id);
+  }, []);
+
   const saveBankHandler = bankForm.handleSubmit(async (values) => {
-    const payload: Bank = { ...values, slug: values.slug || slugify(values.name) };
-    await saveBank(payload);
-    setBanks((current) => {
-      const exists = current.some((item) => item.id === payload.id);
-      return exists ? current.map((item) => (item.id === payload.id ? payload : item)) : [payload, ...current];
-    });
-    setBankEditorId(payload.id);
-    toast.success("Banco guardado");
+    try {
+      setSavingBank(true);
+      const payload: Bank = { ...values, slug: values.slug || slugify(values.name) };
+      await saveBank(payload);
+      setBanks((current) => {
+        const exists = current.some((item) => item.id === payload.id);
+        return exists ? current.map((item) => (item.id === payload.id ? payload : item)) : [payload, ...current];
+      });
+      setBankEditorId(payload.id);
+      toast.success("Banco guardado");
+    } catch (e) {
+      toast.error("No se pudo guardar el banco");
+    } finally {
+      setSavingBank(false);
+    }
   });
 
   const saveCardHandler = cardForm.handleSubmit(async (values) => {
-    const payload: CreditCard = {
-      id: values.id,
-      bankId: values.bankId,
-      name: values.name,
-      slug: values.slug || slugify(values.name),
-      category: values.category,
-      imageUrl: values.imageUrl,
-      description: values.description,
-      benefits: values.benefits.map((item) => item.value),
-      requirements: values.requirements.map((item) => item.value),
-      details: {
-        annualFee: values.annualFee,
-        minIncome: values.minIncome,
-        currency: values.currency,
-        approvalLevel: values.approvalLevel,
-        highlight: values.highlight,
-        idealProfile: values.idealProfile,
-        seoDescription: values.seoDescription,
-      },
-      featured: values.featured,
-      active: values.active,
-      visibility: values.visibility,
-      createdAt: cards.find((item) => item.id === values.id)?.createdAt ?? new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    try {
+      setSavingCard(true);
+      const payload: CreditCard = {
+        id: values.id,
+        bankId: values.bankId,
+        name: values.name,
+        slug: values.slug || slugify(values.name),
+        category: values.category,
+        imageUrl: values.imageUrl,
+        description: values.description,
+        benefits: values.benefits.map((item) => item.value),
+        requirements: values.requirements.map((item) => item.value),
+        details: {
+          annualFee: values.annualFee,
+          minIncome: values.minIncome,
+          currency: values.currency,
+          approvalLevel: values.approvalLevel,
+          highlight: values.highlight,
+          idealProfile: values.idealProfile,
+          seoDescription: values.seoDescription,
+        },
+        featured: values.featured,
+        active: values.active,
+        visibility: values.visibility,
+        createdAt: cards.find((item) => item.id === values.id)?.createdAt ?? new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-    await saveCreditCard(payload);
-    setCards((current) => {
-      const exists = current.some((item) => item.id === payload.id);
-      return exists ? current.map((item) => (item.id === payload.id ? payload : item)) : [payload, ...current];
-    });
-    setCardEditorId(payload.id);
-    toast.success("Tarjeta guardada");
+      await saveCreditCard(payload);
+      setCards((current) => {
+        const exists = current.some((item) => item.id === payload.id);
+        return exists ? current.map((item) => (item.id === payload.id ? payload : item)) : [payload, ...current];
+      });
+      setCardEditorId(payload.id);
+      toast.success("Tarjeta guardada");
+    } catch (e) {
+      toast.error("No se pudo guardar la tarjeta");
+    } finally {
+      setSavingCard(false);
+    }
   });
 
   const applyJsonMode = () => {
@@ -323,7 +447,7 @@ export function AdminDashboard() {
       </section>
 
       <Tabs defaultValue="cards" className="space-y-6">
-        <TabsList className="rounded-full border border-white/10 bg-white/5 p-1">
+        <TabsList className="rounded-full bg-white/5 p-1">
           <TabsTrigger value="cards" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">Tarjetas</TabsTrigger>
           <TabsTrigger value="banks" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">Bancos</TabsTrigger>
           <TabsTrigger value="home" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">Home</TabsTrigger>
@@ -337,7 +461,48 @@ export function AdminDashboard() {
                 <h2 className="text-xl font-semibold text-white">Listado de tarjetas</h2>
                 <p className="text-sm text-slate-400">CRUD completo, estado visible y acciones rápidas.</p>
               </div>
-              <Button onClick={() => setCardEditorId(null)} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button
+                onClick={() => {
+                  try {
+                    if (!banks.length || !banks[0]?.id) {
+                      toast.error("Primero crea un banco en la pestaña Bancos.");
+                      return;
+                    }
+                    const draft = createEmptyCard(String(banks[0].id));
+                    const placeholder: CreditCard = {
+                      id: draft.id,
+                      bankId: draft.bankId,
+                      name: draft.name || "Nueva tarjeta",
+                      slug: draft.slug || slugify(draft.name || "Nueva tarjeta"),
+                      category: draft.category,
+                      imageUrl: draft.imageUrl,
+                      description: draft.description,
+                      benefits: draft.benefits.map((b) => b.value).filter(Boolean),
+                      requirements: draft.requirements.map((r) => r.value).filter(Boolean),
+                      details: {
+                        annualFee: draft.annualFee,
+                        minIncome: draft.minIncome,
+                        currency: draft.currency,
+                        approvalLevel: draft.approvalLevel,
+                        highlight: draft.highlight,
+                        idealProfile: draft.idealProfile,
+                        seoDescription: draft.seoDescription,
+                      },
+                      featured: draft.featured,
+                      active: draft.active,
+                      visibility: draft.visibility,
+                      createdAt: new Date().toISOString(),
+                      updatedAt: new Date().toISOString(),
+                    };
+                    setCards((current) => [placeholder, ...current]);
+                    setCardEditorId(placeholder.id);
+                  } catch (e) {
+                    console.error("Nueva tarjeta error:", e);
+                    toast.error("No se pudo iniciar el formulario de nueva tarjeta.");
+                  }
+                }}
+                className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+              >
                 <Plus className="size-4" /> Nueva
               </Button>
             </div>
@@ -355,9 +520,13 @@ export function AdminDashboard() {
                         variant="outline"
                         size="sm"
                         onClick={async () => {
-                          await deleteCreditCard(card.id);
-                          setCards((current) => current.filter((item) => item.id !== card.id));
-                          toast.success("Tarjeta eliminada");
+                          try {
+                            await deleteCreditCard(card.id);
+                            setCards((current) => current.filter((item) => item.id !== card.id));
+                            toast.success("Tarjeta eliminada");
+                          } catch {
+                            toast.error("No se pudo eliminar la tarjeta");
+                          }
                         }}
                         className="rounded-full border-red-500/20 bg-red-500/10 text-red-200 hover:bg-red-500/15"
                       >
@@ -374,10 +543,14 @@ export function AdminDashboard() {
                         key={action.label}
                         type="button"
                         onClick={async () => {
-                          const next = { ...card, [action.field]: action.value, updatedAt: new Date().toISOString() } as CreditCard;
-                          await saveCreditCard(next);
-                          setCards((current) => current.map((item) => (item.id === card.id ? next : item)));
-                          toast.success("Estado actualizado");
+                          try {
+                            const next = { ...card, [action.field]: action.value, updatedAt: new Date().toISOString() } as CreditCard;
+                            await saveCreditCard(next);
+                            setCards((current) => current.map((item) => (item.id === card.id ? next : item)));
+                            toast.success("Estado actualizado");
+                          } catch {
+                            toast.error("No se pudo actualizar el estado");
+                          }
                         }}
                         className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-xs font-medium text-slate-200"
                       >
@@ -423,7 +596,11 @@ export function AdminDashboard() {
                 <InputField label="Descripción SEO" value={cardForm.watch("seoDescription")} onChange={(value) => cardForm.setValue("seoDescription", value)} error={cardForm.formState.errors.seoDescription?.message} className="xl:col-span-2" />
                 <div className="space-y-2 xl:col-span-2">
                   <label className="text-sm font-medium text-slate-200">Descripción enriquecida</label>
-                  <RichTextEditor value={cardForm.watch("description")} onChange={(value) => cardForm.setValue("description", value)} />
+                  {editorReady ? (
+                    <RichTextEditor value={cardForm.watch("description")} onChange={(value) => cardForm.setValue("description", value)} />
+                  ) : (
+                    <Textarea value={cardForm.watch("description")} onChange={(event) => cardForm.setValue("description", event.target.value)} className="min-h-40 rounded-[28px] border-white/10 bg-[#0D1020] text-xs text-slate-200" />
+                  )}
                 </div>
                 <DynamicList label="Beneficios" fields={benefitFields.fields} onAdd={() => benefitFields.append({ value: "" })} onRemove={(index) => benefitFields.remove(index)} render={(field, index) => (
                   <Input value={cardForm.watch(`benefits.${index}.value`)} onChange={(event) => cardForm.setValue(`benefits.${index}.value`, event.target.value)} className="rounded-[20px] border-white/10 bg-white/5 text-white" placeholder="Beneficio" />
@@ -437,7 +614,7 @@ export function AdminDashboard() {
                   <ToggleField label="Featured" pressed={cardForm.watch("featured")} onChange={(value) => cardForm.setValue("featured", value)} />
                 </div>
                 <div className="xl:col-span-2 flex justify-end">
-                  <Button type="submit" className="rounded-full bg-primary px-6 text-primary-foreground hover:bg-primary/90">Guardar tarjeta</Button>
+                  <Button type="submit" disabled={savingCard} className="rounded-full bg-primary px-6 text-primary-foreground hover:bg-primary/90">{savingCard ? "Guardando..." : "Guardar tarjeta"}</Button>
                 </div>
               </form>
             )}
@@ -451,7 +628,14 @@ export function AdminDashboard() {
                 <h2 className="text-xl font-semibold text-white">Bancos</h2>
                 <p className="text-sm text-slate-400">Administra entidades y mueve tarjetas entre bancos.</p>
               </div>
-              <Button onClick={() => setBankEditorId(null)} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button
+                onClick={() => {
+                  const draft = createEmptyBank();
+                  setBanks((current) => [draft as any, ...current]);
+                  setBankEditorId(draft.id);
+                }}
+                className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+              >
                 <Plus className="size-4" /> Nuevo
               </Button>
             </div>
@@ -498,7 +682,7 @@ export function AdminDashboard() {
             </div>
             <ToggleField label="Banco featured" pressed={bankForm.watch("featured")} onChange={(value) => bankForm.setValue("featured", value)} />
             <div className="flex justify-end">
-              <Button type="submit" className="rounded-full bg-primary px-6 text-primary-foreground hover:bg-primary/90">Guardar banco</Button>
+              <Button type="submit" disabled={savingBank} className="rounded-full bg-primary px-6 text-primary-foreground hover:bg-primary/90">{savingBank ? "Guardando..." : "Guardar banco"}</Button>
             </div>
           </form>
         </TabsContent>
@@ -533,6 +717,134 @@ export function AdminDashboard() {
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => refresh()} className="rounded-full border-white/10 bg-white/5 text-white hover:bg-white/10">Refrescar contenido</Button>
                 <Button variant="outline" onClick={importDemoData} className="rounded-full border-primary/20 bg-primary/10 text-primary hover:bg-primary/15">Importar datos demo</Button>
+                <Button variant="outline" onClick={importPopularBhdData} className="rounded-full border-emerald-300/20 bg-emerald-300/10 text-emerald-200 hover:bg-emerald-300/15">Importar Popular+BHD</Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      const text = await file.text();
+
+                      const safeJsonParse = (raw: string) => {
+                        try { return JSON.parse(raw); } catch { return null; }
+                      };
+
+                      const parseLabeledArrays = (raw: string) => {
+                        const map = {} as Record<string, any[]>;
+                        const regex = /(^|\n)\s*([A-Za-z0-9_-]{2,})\s*\n\s*(\[([\s\S]*?)\])/g;
+                        let m: RegExpExecArray | null;
+                        while ((m = regex.exec(raw)) !== null) {
+                          const label = m[2].toLowerCase();
+                          const arrayText = m[3];
+                          const arr = safeJsonParse(arrayText);
+                          if (Array.isArray(arr)) map[label] = arr;
+                        }
+                        return Object.keys(map).length ? map : null;
+                      };
+
+                      const parsed = safeJsonParse(text);
+                      let importedBanks: Bank[] = [];
+                      let importedCards: CreditCard[] = [];
+
+                      if (parsed && (parsed.banks || parsed.Banks || parsed.cards || parsed.credit_cards)) {
+                        importedBanks = (parsed.banks || parsed.Banks || []) as Bank[];
+                        importedCards = (parsed.cards || parsed.credit_cards || []) as CreditCard[];
+                      } else {
+                        const grouped: any = parseLabeledArrays(text) || parsed;
+                        if (grouped && typeof grouped === "object") {
+                          const all: any[] = [];
+                          for (const [key, arr] of Object.entries(grouped)) {
+                            if (Array.isArray(arr)) {
+                              for (const item of arr) all.push({ ...item, bankSlug: item.bankSlug || String(key).toLowerCase() });
+                            }
+                          }
+
+                          const slugs = Array.from(new Set(all.map((c) => String(c.bankSlug || "").toLowerCase()).filter(Boolean)));
+                          importedBanks = slugs.map((slug) => ({ id: slug, name: slug.toUpperCase(), slug, logoUrl: "/assets/placeholder.svg", description: `Entidad bancaria ${slug.toUpperCase()}`, featured: false }));
+
+                          const mapApproval: (arg?: string) => CreditCard["details"]["approvalLevel"] = (v?: string) => {
+                            const x = (v || "").toLowerCase().replace(/\s|-/g, "");
+                            if (x.includes("alta") || x === "alto") return "alto";
+                            if (x.includes("muybaja") || x === "baja") return "bajo";
+                            if (x.includes("mediabaja") || x.includes("media")) return "medio";
+                            return "medio";
+                          };
+
+                          const mapCurrency: (arg?: string) => CreditCard["details"]["currency"] = (v?: string) => {
+                            const x = (v || "").toUpperCase();
+                            if (x.includes("USD") || x.includes("US$")) return "USD";
+                            return "DOP";
+                          };
+
+                          const mapCategory: (arg?: string) => CardFormValues["category"] = (v?: string) => {
+                            const x = (v || "").toLowerCase();
+                            if (x.includes("cash")) return "cashback";
+                            if (x.includes("viaj")) return "viajes";
+                            if (x.includes("prem")) return "premium";
+                            if (x.includes("negoc")) return "negocios";
+                            return "clásica";
+                          };
+
+                          const ensureArray = (val: any) => Array.isArray(val) ? val.map((it) => (typeof it === "string" ? it : (it?.text ?? ""))).filter((s) => s && typeof s === "string") : [];
+                          const now = new Date().toISOString();
+
+                          importedCards = all.map((item) => {
+                            const name = item.name ?? "Tarjeta";
+                            const slug = item.slug || slugify(name);
+                            const bankSlug = String(item.bankSlug || "").toLowerCase();
+                            const details = {
+                              annualFee: String(item.annualFee ?? ""),
+                              minIncome: String(item.incomeMin ?? ""),
+                              currency: mapCurrency(item.currency),
+                              approvalLevel: mapApproval(item.approval),
+                              highlight: item.highlight ?? "",
+                              idealProfile: item.idealFor ?? "",
+                              seoDescription: item.seoDescription ?? "",
+                            } as CreditCard["details"];
+
+                            const card: CreditCard = {
+                              id: String(item.id || crypto.randomUUID()),
+                              bankId: bankSlug,
+                              name,
+                              slug,
+                              category: mapCategory(item.type),
+                              imageUrl: String(item.logo || "/assets/placeholder.svg"),
+                              description: item.description || `<p>${details.highlight}</p>`,
+                              benefits: ensureArray(item.benefits),
+                              requirements: ensureArray(item.requirements),
+                              details,
+                              featured: Boolean(item.featured) || false,
+                              active: item.active !== false,
+                              visibility: (item.visibility as any) === "featured" ? "featured" : "active",
+                              createdAt: now,
+                              updatedAt: now,
+                            };
+                            return card;
+                          });
+                        }
+                      }
+
+                      for (const bank of importedBanks) {
+                        await saveBank(bank);
+                      }
+                      for (const card of importedCards) {
+                        await saveCreditCard(card);
+                      }
+                      if (importedBanks.length) setBanks(importedBanks);
+                      if (importedCards.length) setCards(importedCards);
+                      toast.success("Importación completada");
+                    } catch (err) {
+                      toast.error("No se pudo importar el JSON");
+                    } finally {
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }
+                  }}
+                />
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="rounded-full border-primary/20 bg-primary/10 text-primary hover:bg-primary/15">Importar JSON</Button>
               </div>
             </div>
             <p className="text-sm leading-7 text-slate-300">El frontend consume datos y el panel administra bancos y tarjetas mediante Firestore. Storage queda limitado a URLs externas en los formularios, como pediste.</p>

@@ -1,42 +1,32 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-
 import { CardDetailPage } from "@/components/card-detail-page";
-import { banks, creditCards } from "@/lib/mock-data";
 
 export async function generateStaticParams() {
-  return creditCards.map((card) => ({ slug: card.slug }));
-}
-
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  const card = creditCards.find((item) => item.slug === slug);
-  const bank = banks.find((item) => item.id === card?.bankId);
-
-  if (!card || !bank) {
-    return {
-      title: "Tarjeta no encontrada",
-    };
+  try {
+    const mod = await import("@/lib/datasets/popular-bhd");
+    const grouped = (mod as any).default as Record<string, Array<{ slug?: string }>>;
+    const all: string[] = [];
+    for (const arr of Object.values(grouped)) {
+      for (const item of arr) {
+        const slug = (item as any).slug as string | undefined;
+        if (slug) all.push(slug);
+      }
+    }
+    const unique = Array.from(new Set(all));
+    return unique.map((slug) => ({ slug }));
+  } catch {
+    return [];
   }
-
-  return {
-    title: card.name,
-    description: card.details.seoDescription,
-    openGraph: {
-      title: `${card.name} | ${bank.name}`,
-      description: card.details.seoDescription,
-      images: [{ url: "/assets/placeholder.svg", alt: "placeholder" }],
-    },
-  };
 }
+
+export const metadata: Metadata = {
+  title: "Detalle de tarjeta | TuCredito",
+  description: "Información detallada de la tarjeta seleccionada en TuCredito.",
+};
+
+export const dynamicParams = false;
 
 export default async function TarjetaDetallePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const card = creditCards.find((item) => item.slug === slug);
-
-  if (!card || (!card.active && card.visibility === "draft")) {
-    notFound();
-  }
-
   return <CardDetailPage slug={slug} />;
 }

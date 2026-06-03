@@ -17,15 +17,38 @@ export function CardDetailPage({ slug }: { slug: string }) {
 
   const jsonLd = useMemo(() => {
     if (!card) return null;
-    return {
+    const url = `https://tucredito.me/tarjetas/${card.slug}`;
+    const product = {
       "@context": "https://schema.org",
       "@type": "FinancialProduct",
       name: card.name,
       description: stripHtml(card.description),
-      brand: card.bank.name,
-      category: card.category,
+      url,
       image: "/assets/placeholder.svg",
-    };
+      category: card.category,
+      brand: {
+        "@type": "Organization",
+        name: card.bank.name,
+      },
+      offers: {
+        "@type": "Offer",
+        price: (card.details.annualFee || "").replace(/[^0-9]/g, ""),
+        priceCurrency: /usd/i.test(card.details.currency) ? "USD" : "DOP",
+        description: card.details.highlight,
+        url,
+      },
+    } as const;
+    const breadcrumb = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Inicio", item: "https://tucredito.me/" },
+        { "@type": "ListItem", position: 2, name: "Tarjetas", item: "https://tucredito.me/tarjetas" },
+        { "@type": "ListItem", position: 3, name: card.bank.name, item: `https://tucredito.me/tarjetas?banco=${card.bank.slug}` },
+        { "@type": "ListItem", position: 4, name: card.name, item: url },
+      ],
+    } as const;
+    return { product, breadcrumb };
   }, [card]);
 
   if (loading && !card) {
@@ -46,7 +69,12 @@ export function CardDetailPage({ slug }: { slug: string }) {
 
   return (
     <div className="mx-auto max-w-[1220px] px-5 py-14 sm:px-8 sm:py-16">
-      {jsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} /> : null}
+      {jsonLd ? (
+        <>
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd.product) }} />
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd.breadcrumb) }} />
+        </>
+      ) : null}
       <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="surface p-5">
           <Image src="/assets/placeholder.svg" alt="placeholder" width={400} height={300} className="h-auto w-full border border-border" priority />

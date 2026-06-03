@@ -4,13 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, SendHorizonal, Sparkles, User2 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { buildRecommendation, compareRecommendation } from "@/lib/recommendations";
+import { askGemini } from "@/lib/gemini";
 import type { ChatMessage, CreditCardWithBank } from "@/lib/types";
 
 const formSchema = z.object({
@@ -33,24 +34,91 @@ export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
   });
 
   const cardsBySlug = useMemo(() => Object.fromEntries(cards.map((card) => [card.slug, card])), [cards]);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
-  const onSubmit = form.handleSubmit((values) => {
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messages.length]);
+
+  function TypingDots() {
+    return (
+      <div className="flex items-center gap-1 py-0.5">
+        <motion.span className="inline-block h-1.5 w-1.5 rounded-full bg-foreground/70" animate={{ opacity: [0.2, 1, 0.2], y: [0, -2, 0] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }} />
+        <motion.span className="inline-block h-1.5 w-1.5 rounded-full bg-foreground/70" animate={{ opacity: [0.2, 1, 0.2], y: [0, -2, 0] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut", delay: 0.15 }} />
+        <motion.span className="inline-block h-1.5 w-1.5 rounded-full bg-foreground/70" animate={{ opacity: [0.2, 1, 0.2], y: [0, -2, 0] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }} />
+      </div>
+    );
+  }
+
+  const onSubmit = form.handleSubmit(async (values) => {
     const prompt = values.message.trim();
-    const comparison = compareRecommendation(prompt, cards);
-    const recommendation = comparison ?? buildRecommendation(prompt, cards);
+    if (!prompt) return;
 
+    const userId = `${Date.now()}-user`;
+    const typingId = `typing-${Date.now()}`;
+    // Muestra inmediatamente el mensaje del usuario y el indicador de escritura
     setMessages((current) => [
       ...current,
-      { id: `${Date.now()}-user`, role: "user", content: prompt },
-      {
-        id: `${Date.now()}-assistant`,
-        role: "assistant",
-        content: recommendation.answer,
-        cards: recommendation.suggestedCards,
-      },
+      { id: userId, role: "user", content: prompt },
+      { id: typingId, role: "assistant", content: "__typing__" },
     ]);
-
     form.reset();
+
+    // Flujo de IA:
+    // 1) Si hay NEXT_PUBLIC_AI_API_URL (Cloudflare Worker), lo usamos primero (OpenRouter proxy seguro y sin Blaze)
+    // 2) Si no, y existe NEXT_PUBLIC_GEMINI_API_KEY, usamos Gemini en cliente
+    // 3) Si todo falla, heurística local
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_AI_API_URL;
+      if (apiUrl) {
+        const condensed = cards.slice(0, 140).map((c) => ({
+          slug: c.slug,
+          name: c.name,
+          bank: c.bank.name,
+          bankSlug: c.bank.slug,
+          category: c.category,
+          featured: !!c.featured,
+          annualFee: c.details.annualFee,
+          minIncome: c.details.minIncome,
+          approvalLevel: c.details.approvalLevel,
+          highlight: c.details.highlight,
+          idealProfile: c.details.idealProfile,
+        }));
+        const history = messages.slice(-6).map((m) => ({ role: m.role, content: m.content }));
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt, cards: condensed, history }),
+        });
+        if (!res.ok) throw new Error("ai failed");
+        const data = await res.json();
+        const answer: string = data.answer || "";
+        const slugs: string[] = Array.isArray(data.slugs) ? data.slugs : [];
+        setMessages((current) =>
+          current.map((m) => (m.id === typingId ? { id: `${Date.now()}-assistant`, role: "assistant", content: answer, cards: slugs } : m))
+        );
+      } else {
+        const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        if (geminiKey) {
+          const out = await askGemini(prompt, cards, geminiKey);
+          setMessages((current) =>
+            current.map((m) => (m.id === typingId ? { id: `${Date.now()}-assistant`, role: "assistant", content: out.answer, cards: out.slugs } : m))
+          );
+        } else {
+          throw new Error("no ai configured");
+        }
+      }
+    } catch {
+      const comparison = compareRecommendation(prompt, cards);
+      const recommendation = comparison ?? buildRecommendation(prompt, cards);
+      setMessages((current) =>
+        current.map((m) =>
+          m.id === typingId ? { id: `${Date.now()}-assistant`, role: "assistant", content: recommendation.answer, cards: recommendation.suggestedCards } : m
+        )
+      );
+    }
   });
 
   return (
@@ -68,7 +136,7 @@ export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
           </div>
         </div>
         <div className="flex h-[68vh] flex-col">
-          <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
+          <div ref={listRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
             <AnimatePresence initial={false}>
               {messages.map((message) => {
                 const isAssistant = message.role === "assistant";
@@ -88,7 +156,7 @@ export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
                         {isAssistant ? <Bot className="size-3.5" /> : <User2 className="size-3.5" />}
                         {isAssistant ? "TuCredito IA" : "Tú"}
                       </div>
-                      <p>{message.content}</p>
+                      {message.content === "__typing__" ? <TypingDots /> : <p className="whitespace-pre-line">{message.content}</p>}
                       {message.cards?.length ? (
                         <div className="mt-4 flex flex-wrap gap-2">
                           {message.cards.map((slug) => {

@@ -27,10 +27,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    return onAuthStateChanged(auth, (nextUser) => {
-      setUser(nextUser);
+    try {
+      const unsub = onAuthStateChanged(auth, (nextUser) => {
+        setUser(nextUser);
+        setLoading(false);
+      });
+      return () => unsub();
+    } catch {
+      // Si Auth falla por dominio/autorización en el navegador, no rompemos la app
+      setUser(null);
       setLoading(false);
-    });
+      return () => {};
+    }
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -39,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       isAuthorizedAdmin: !!user?.email && ADMIN_ALLOWLIST.includes(user.email.toLowerCase()),
       loginWithGoogle: async () => {
+        googleProvider.setCustomParameters({ prompt: "select_account" });
         await signInWithPopup(auth, googleProvider);
       },
       logout: async () => {

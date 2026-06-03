@@ -60,8 +60,9 @@ export function ComparePage() {
 
       <div className="mt-12">
         <h2 className="text-[28px] font-semibold text-foreground">Añadir tarjetas</h2>
-        <div className="mt-5 grid gap-4 lg:grid-cols-3">
-          {availableCards.slice(0, 6).map((card) => (
+        <div className="mt-5 max-h-[560px] overflow-y-auto pr-1">
+          <div className="grid gap-4 lg:grid-cols-3">
+          {availableCards.map((card) => (
             <button
               key={card.id}
               type="button"
@@ -73,6 +74,7 @@ export function ComparePage() {
               <p className="mt-3 text-[12px] leading-6 text-muted-foreground">{card.details.highlight}</p>
             </button>
           ))}
+          </div>
         </div>
       </div>
     </div>
