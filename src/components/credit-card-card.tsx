@@ -15,7 +15,7 @@ export function CreditCardCard({ card }: { card: CreditCardWithBank }) {
   return (
     <article className="surface p-4 md:p-5">
       <div className="mb-6 flex items-start justify-between gap-3">
-        <div className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground">{card.bank.name.includes("Popular") ? "BAN" : card.bank.name.includes("BHD") ? "BHD" : "BAN"}</div>
+        <div className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground">{card.bank.name}</div>
         {card.category && <span className="border border-border px-2 py-1 text-[9px] text-muted-foreground">{getCategoryLabel(card.category)}</span>}
         {(card as any).cardType === "debit" && <span className="border border-border px-2 py-1 text-[9px] text-muted-foreground">Débito</span>}
       </div>
