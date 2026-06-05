@@ -951,7 +951,10 @@ const dataset = {
       "currency": "RD$",
       "logo": "https://static.bhd.com.do/prueba_V_6ad2d7ceca.png"
     }
-  ]
+  ],
+  scotiabank: [],
+  banreservas: [],
+  qik: []
 };
 
 export default dataset;
