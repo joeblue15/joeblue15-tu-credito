@@ -17,7 +17,7 @@ export function CardDetailPage({ slug }: { slug: string }) {
 
   const jsonLd = useMemo(() => {
     if (!card) return null;
-    const url = `https://tucredito.me/tarjetas/${card.slug}`;
+    const url = `https://tutarjetard.com/tarjetas/${card.slug}`;
     const product = {
       "@context": "https://schema.org",
       "@type": "FinancialProduct",
@@ -42,9 +42,9 @@ export function CardDetailPage({ slug }: { slug: string }) {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Inicio", item: "https://tucredito.me/" },
-        { "@type": "ListItem", position: 2, name: "Tarjetas", item: "https://tucredito.me/tarjetas" },
-        { "@type": "ListItem", position: 3, name: card.bank.name, item: `https://tucredito.me/tarjetas?banco=${card.bank.slug}` },
+        { "@type": "ListItem", position: 1, name: "Inicio", item: "https://tutarjetard.com/" },
+        { "@type": "ListItem", position: 2, name: "Tarjetas", item: "https://tutarjetard.com/tarjetas" },
+        { "@type": "ListItem", position: 3, name: card.bank.name, item: `https://tutarjetard.com/tarjetas?banco=${card.bank.slug}` },
         { "@type": "ListItem", position: 4, name: card.name, item: url },
       ],
     } as const;
@@ -77,7 +77,11 @@ export function CardDetailPage({ slug }: { slug: string }) {
       ) : null}
       <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="surface p-5">
-          <Image src="/assets/placeholder.svg" alt="placeholder" width={400} height={300} className="h-auto w-full border border-border" priority />
+          {card.imageUrl ? (
+            <Image src={card.imageUrl} alt={card.name} width={400} height={300} className="h-auto w-full border border-border" priority />
+          ) : (
+            <Image src="/assets/placeholder.svg" alt="placeholder" width={400} height={300} className="h-auto w-full border border-border" priority />
+          )}
         </div>
         <div className="surface p-6">
           <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{card.bank.name}</p>

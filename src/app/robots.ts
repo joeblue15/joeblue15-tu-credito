@@ -6,11 +6,11 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: ["/", "/tarjetas", "/comparar", "/ia"],
+      allow: ["/", "/tarjetas", "/comparar", "/favoritos", "/ia", "/privacidad", "/terminos", "/cookies"],
       disallow: ["/admin"],
     },
     sitemap: [
-      "https://tucredito.me/sitemap.xml",
+      "https://tutarjetard.com/sitemap.xml",
       // Live sitemap served by Cloudflare Worker (fetches Firestore via REST)
       "https://tucredito-ai.ramirezquezadajoe.workers.dev/sitemap.xml",
     ],

@@ -9,11 +9,14 @@ export const CARD_CATEGORIES = [
   "familia",
 ] as const;
 
+export const CARD_TYPES = ["credit", "debit"] as const;
+
 export const CURRENCIES = ["DOP", "USD"] as const;
 export const APPROVAL_LEVELS = ["bajo", "medio", "alto"] as const;
 export const VISIBILITY_STATES = ["draft", "active", "featured"] as const;
 
 export type CardCategory = (typeof CARD_CATEGORIES)[number];
+export type CardType = (typeof CARD_TYPES)[number];
 export type CurrencyCode = (typeof CURRENCIES)[number];
 export type ApprovalLevel = (typeof APPROVAL_LEVELS)[number];
 export type VisibilityState = (typeof VISIBILITY_STATES)[number];
@@ -42,7 +45,8 @@ export type CreditCard = {
   bankId: string;
   name: string;
   slug: string;
-  category: CardCategory;
+  category?: CardCategory;
+  cardType: CardType;
   imageUrl: string;
   description: string;
   benefits: string[];
@@ -62,6 +66,8 @@ export type CreditCard = {
 export type CreditCardWithBank = CreditCard & {
   bank: Bank;
 };
+
+export type Card = CreditCard;
 
 export type HomeSection = {
   id: string;

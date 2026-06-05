@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { buildRecommendation, compareRecommendation } from "@/lib/recommendations";
 import { askGemini } from "@/lib/gemini";
+import { useAuth } from "@/context/auth-context";
 import type { ChatMessage, CreditCardWithBank } from "@/lib/types";
 
 const formSchema = z.object({
@@ -19,12 +20,16 @@ const formSchema = z.object({
 });
 
 export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
+  const { user } = useAuth();
+  const userName = user?.displayName || user?.email?.split("@")[0];
+  
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
       role: "assistant",
-      content:
-        "Hola, soy la IA de TuCredito. Puedo recomendarte tarjetas reales del catálogo de RD, comparar opciones y explicarte diferencias por anualidad, ingresos o perfil ideal.",
+      content: userName 
+        ? `¡Hola ${userName}! 👋 Soy la IA de TuTarjetaRD. Estoy aquí para ayudarte a encontrar la tarjeta perfecta para ti. Puedo recomendarte opciones del catálogo de RD, comparar beneficios y explicarte diferencias por anualidad, ingresos o perfil ideal. ¿En qué puedo ayudarte hoy?`
+        : "Hola, soy la IA de TuTarjetaRD. Puedo recomendarte tarjetas reales del catálogo de RD, comparar opciones y explicarte diferencias por anualidad, ingresos o perfil ideal.",
     },
   ]);
 
@@ -102,7 +107,8 @@ export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
       } else {
         const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
         if (geminiKey) {
-          const out = await askGemini(prompt, cards, geminiKey);
+          const history = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
+          const out = await askGemini(prompt, cards, geminiKey, history);
           setMessages((current) =>
             current.map((m) => (m.id === typingId ? { id: `${Date.now()}-assistant`, role: "assistant", content: out.answer, cards: out.slugs } : m))
           );
@@ -154,7 +160,7 @@ export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
                     >
                       <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                         {isAssistant ? <Bot className="size-3.5" /> : <User2 className="size-3.5" />}
-                        {isAssistant ? "TuCredito IA" : "Tú"}
+                        {isAssistant ? "TuTarjetaRD IA" : "Tú"}
                       </div>
                       {message.content === "__typing__" ? <TypingDots /> : <p className="whitespace-pre-line">{message.content}</p>}
                       {message.cards?.length ? (
@@ -210,9 +216,9 @@ export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
             </div>
           </div>
           <div className="space-y-3 text-sm text-foreground/75">
-            <p>• “Quiero cashback para gasto diario”.</p>
-            <p>• “Compárame una tarjeta premium con una cashback”.</p>
-            <p>• “Busco algo con aprobación más accesible”.</p>
+            <p>• “Gano 50k RD, ¿qué tarjeta me recomiendas?”</p>
+            <p>• “Quiero viajar, ¿qué opciones hay?”</p>
+            <p>• “Compárame por ingreso mínimo”</p>
           </div>
         </div>
         <div className="surface p-5">

@@ -27,7 +27,7 @@ export const defaultHomeContent: HomeContent = {
       eyebrow: "Ayuda personalizada",
       title: "No sabes cuál elegir? Usa el asesor inteligente",
       description:
-        "Haz una pregunta natural y recibe una recomendación clara usando solo tarjetas reales disponibles en TuCredito.",
+        "Haz una pregunta natural y recibe una recomendación clara usando solo tarjetas reales disponibles en TuTarjetaRD.",
       ctaLabel: "Abrir IA",
       ctaHref: "/ia",
     },
@@ -78,6 +78,7 @@ export const creditCards: CreditCard[] = [
     name: "Visa Clásica Popular",
     slug: "visa-clasica-popular",
     category: "clásica",
+    cardType: "credit",
     imageUrl: "/assets/placeholder.svg",
     description: "<p>Tarjeta ideal para el uso diario con beneficios esenciales y costos fáciles de entender. Está pensada para quienes buscan una primera tarjeta funcional y confiable dentro del mercado dominicano.</p>",
     benefits: [
@@ -111,6 +112,7 @@ export const creditCards: CreditCard[] = [
     name: "Visa Signature Popular",
     slug: "visa-signature-popular",
     category: "premium",
+    cardType: "credit",
     imageUrl: "/assets/placeholder.svg",
     description: "<p>La tarjeta premium de Banco Popular con beneficios exclusivos para clientes que valoran comodidad, acceso y servicios diferenciados. Combina experiencia de viaje, protección y atención preferencial.</p>",
     benefits: [
@@ -144,6 +146,7 @@ export const creditCards: CreditCard[] = [
     name: "BHD Cashback Card",
     slug: "bhd-cashback",
     category: "cashback",
+    cardType: "credit",
     imageUrl: "/assets/placeholder.svg",
     description: "<p>Gana cashback en todas tus compras con BHD León. Es una alternativa directa para quienes quieren retorno constante en gastos recurrentes y categorías de uso masivo.</p>",
     benefits: [
@@ -177,6 +180,7 @@ export const creditCards: CreditCard[] = [
     name: "Travel Banreservas",
     slug: "travel-banreservas",
     category: "viajes",
+    cardType: "credit",
     imageUrl: "/assets/placeholder.svg",
     description: "<p>Tarjeta de viaje pensada para usuarios que buscan beneficios internacionales y acumulación asociada a consumo fuera del país.</p>",
     benefits: [
@@ -210,6 +214,7 @@ export const creditCards: CreditCard[] = [
     name: "Scotia Business One",
     slug: "scotia-business-one",
     category: "negocios",
+    cardType: "credit",
     imageUrl: "/assets/placeholder.svg",
     description: "<p>Solución corporativa para emprendedores y profesionales que desean separar gastos personales y operativos.</p>",
     benefits: [

@@ -14,7 +14,7 @@ export const aiRecommend = functions
     timeoutSeconds: 20,
     secrets: ["OPENROUTER_API_KEY"],
   })
-  .https.onRequest(async (req, res): Promise<void> => {
+  .https.onRequest(async (req: any, res: any): Promise<void> => {
     res.set("Access-Control-Allow-Origin", "*");
     res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -38,11 +38,11 @@ export const aiRecommend = functions
 
       const banksSnap = await db.collection("banks").get();
       const banks: Record<string, any> = {};
-      banksSnap.forEach((d) => (banks[d.id] = d.data()));
+      banksSnap.forEach((d: any) => (banks[d.id] = d.data()));
 
-      const cards = cardsSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      const cards = cardsSnap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
 
-      const condensed = cards.slice(0, 120).map((c) => ({
+      const condensed = cards.slice(0, 120).map((c: any) => ({
         slug: c.slug,
         name: c.name,
         bank: banks[c.bankId]?.name || c.bankId,

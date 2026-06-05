@@ -20,8 +20,8 @@ import { useCatalogData } from "@/hooks/use-catalog-data";
 import { deleteBank, deleteCreditCard, saveBank, saveCreditCard } from "@/lib/firestore";
 import { banks as demoBanks, creditCards as demoCards } from "@/lib/mock-data";
 import { slugify } from "@/lib/format";
-import { CARD_CATEGORIES } from "@/lib/types";
-import type { Bank, CreditCard } from "@/lib/types";
+import { CARD_CATEGORIES, CARD_TYPES } from "@/lib/types";
+import type { Bank, CardCategory, CreditCard } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const bankSchema = z.object({
@@ -38,7 +38,8 @@ const cardSchema = z.object({
   name: z.string().min(2),
   slug: z.string().min(2),
   bankId: z.string().min(1),
-  category: z.enum(CARD_CATEGORIES),
+  cardType: z.enum(CARD_TYPES),
+  category: z.enum(CARD_CATEGORIES).optional(),
   imageUrl: z.string().url(),
   description: z.string().min(20),
   benefits: z.array(z.object({ value: z.string().min(1) })).min(1),
@@ -75,6 +76,7 @@ function createEmptyCard(bankId?: string): CardFormValues {
     name: "",
     slug: "",
     bankId: bankId ?? "",
+    cardType: "credit",
     category: "cashback",
     imageUrl: "/assets/placeholder.svg",
     description: "<p>Describe aquí la tarjeta con un tono claro y directo.</p>",
@@ -105,6 +107,7 @@ export function AdminDashboard() {
   const [savingCard, setSavingCard] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [editorReady, setEditorReady] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const bankForm = useForm<BankFormValues>({
     resolver: zodResolver(bankSchema),
@@ -187,12 +190,17 @@ export function AdminDashboard() {
         return "DOP";
       };
 
-      const mapCategory: (arg?: string) => CardFormValues["category"] = (v?: string) => {
+      const mapCategory: (arg?: string) => CardCategory | undefined = (v?: string) => {
         const x = (v || "").toLowerCase();
         if (x.includes("cash")) return "cashback";
         if (x.includes("viaj")) return "viajes";
         if (x.includes("prem")) return "premium";
         if (x.includes("negoc")) return "negocios";
+        if (x.includes("clas")) return "clásica";
+        if (x.includes("estu")) return "estudiante";
+        if (x.includes("reta")) return "retail";
+        if (x.includes("fami")) return "familia";
+        if (!x || x === "") return undefined;
         return "clásica";
       };
 
@@ -218,6 +226,7 @@ export function AdminDashboard() {
           bankId: bankSlug,
           name,
           slug,
+          cardType: "credit",
           category: mapCategory((item as any).type),
           imageUrl: String((item as any).logo || "/assets/placeholder.svg"),
           description: (item as any).description || `<p>${details.highlight}</p>`,
@@ -274,6 +283,7 @@ export function AdminDashboard() {
         name: selected.name,
         slug: selected.slug,
         bankId: selected.bankId,
+        cardType: (selected as any).cardType || "credit",
         category: selected.category,
         imageUrl: selected.imageUrl,
         description: selected.description,
@@ -308,6 +318,15 @@ export function AdminDashboard() {
     return () => clearTimeout(id);
   }, []);
 
+  useEffect(() => {
+    const imageUrl = cardForm.watch("imageUrl");
+    if (imageUrl && imageUrl !== "/assets/placeholder.svg") {
+      setImagePreview(imageUrl);
+    } else {
+      setImagePreview(null);
+    }
+  }, [cardForm.watch("imageUrl")]);
+
   const saveBankHandler = bankForm.handleSubmit(async (values) => {
     try {
       setSavingBank(true);
@@ -334,7 +353,8 @@ export function AdminDashboard() {
         bankId: values.bankId,
         name: values.name,
         slug: values.slug || slugify(values.name),
-        category: values.category,
+        cardType: values.cardType,
+        category: values.cardType === "debit" ? undefined : (values.category || undefined),
         imageUrl: values.imageUrl,
         description: values.description,
         benefits: values.benefits.map((item) => item.value),
@@ -381,24 +401,24 @@ export function AdminDashboard() {
 
   if (isMobile) {
     return (
-      <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-8 text-center text-slate-300">
+      <div className="rounded-[32px] border border-border bg-card/5 p-8 text-center text-muted-foreground">
         <ShieldAlert className="mx-auto mb-4 size-10 text-primary" />
-        <h1 className="text-2xl font-semibold text-white">Admin solo en desktop</h1>
-        <p className="mt-3 text-sm leading-7 text-slate-400">El panel administrativo de TuCredito está bloqueado en móviles para mantener una gestión cómoda y segura.</p>
+        <h1 className="text-2xl font-semibold text-foreground">Admin solo en desktop</h1>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">El panel administrativo de TuTarjetaRD está bloqueado en móviles para mantener una gestión cómoda y segura.</p>
       </div>
     );
   }
 
   if (loading) {
-    return <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-8 text-slate-300">Verificando acceso...</div>;
+    return <div className="rounded-[32px] border border-border bg-card/5 p-8 text-muted-foreground">Verificando acceso...</div>;
   }
 
   if (!user) {
     return (
-      <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-8 text-center">
+      <div className="rounded-[32px] border border-border bg-card/5 p-8 text-center">
         <LogIn className="mx-auto mb-4 size-10 text-primary" />
-        <h1 className="text-3xl font-semibold text-white">Acceso administrativo</h1>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-400">Ingresa con Google para administrar bancos, tarjetas, destacados, estados y contenido editorial.</p>
+        <h1 className="text-3xl font-semibold text-foreground">Acceso administrativo</h1>
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">Ingresa con Google para administrar bancos, tarjetas, destacados, estados y contenido editorial.</p>
         <Button onClick={() => loginWithGoogle()} className="mt-6 rounded-full bg-primary px-6 text-primary-foreground hover:bg-primary/90">
           Entrar con Google
         </Button>
@@ -410,9 +430,9 @@ export function AdminDashboard() {
     return (
       <div className="rounded-[32px] border border-red-500/20 bg-red-500/5 p-8 text-center">
         <ShieldAlert className="mx-auto mb-4 size-10 text-red-300" />
-        <h1 className="text-3xl font-semibold text-white">Usuario sin autorización</h1>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-300">Tu cuenta está autenticada pero no pertenece al allowlist de administradores. Agrega tu correo en <code className="rounded bg-white/10 px-2 py-1">ADMIN_ALLOWLIST</code> para habilitar este panel.</p>
-        <Button variant="outline" onClick={() => logout()} className="mt-6 rounded-full border-white/10 bg-white/5 text-white hover:bg-white/10">
+        <h1 className="text-3xl font-semibold text-foreground">Usuario sin autorización</h1>
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">Tu cuenta está autenticada pero no pertenece al allowlist de administradores. Agrega tu correo en <code className="rounded bg-card/10 px-2 py-1">ADMIN_ALLOWLIST</code> para habilitar este panel.</p>
+        <Button variant="outline" onClick={() => logout()} className="mt-6 rounded-full border-border bg-card text-foreground hover:bg-accent">
           Cerrar sesión
         </Button>
       </div>
@@ -422,14 +442,14 @@ export function AdminDashboard() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6">
+        <div className="rounded-[32px] border border-border bg-card/5 p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="mb-2 text-xs uppercase tracking-[0.22em] text-primary">Panel Admin</p>
-              <h1 className="text-3xl font-semibold text-white">Control total de TuCredito</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">Gestiona bancos, tarjetas, estado visible, featured, contenido, SEO y estructura avanzada del catálogo.</p>
+              <h1 className="text-3xl font-semibold text-foreground">Control total de TuTarjetaRD</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">Gestiona bancos, tarjetas, estado visible, featured, contenido, SEO y estructura avanzada del catálogo.</p>
             </div>
-            <Button variant="outline" onClick={() => logout()} className="rounded-full border-white/10 bg-white/5 text-white hover:bg-white/10">Salir</Button>
+            <Button variant="outline" onClick={() => logout()} className="rounded-full border-border bg-card text-foreground hover:bg-accent">Salir</Button>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3">
@@ -438,28 +458,28 @@ export function AdminDashboard() {
             { label: "Featured", value: metrics.featured },
             { label: "Draft", value: metrics.drafts },
           ].map((item) => (
-            <div key={item.label} className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
-              <p className="text-sm text-slate-400">{item.label}</p>
-              <p className="mt-3 text-3xl font-semibold text-white">{item.value}</p>
+            <div key={item.label} className="rounded-[28px] border border-border bg-card/5 p-5">
+              <p className="text-sm text-muted-foreground">{item.label}</p>
+              <p className="mt-3 text-3xl font-semibold text-foreground">{item.value}</p>
             </div>
           ))}
         </div>
       </section>
 
       <Tabs defaultValue="cards" className="space-y-6">
-        <TabsList className="rounded-full bg-white/5 p-1">
-          <TabsTrigger value="cards" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">Tarjetas</TabsTrigger>
-          <TabsTrigger value="banks" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">Bancos</TabsTrigger>
-          <TabsTrigger value="home" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">Home</TabsTrigger>
-          <TabsTrigger value="overview" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">Resumen</TabsTrigger>
+        <TabsList className="rounded-full bg-card p-1">
+          <TabsTrigger value="cards" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-foreground">Tarjetas</TabsTrigger>
+          <TabsTrigger value="banks" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-foreground">Bancos</TabsTrigger>
+          <TabsTrigger value="home" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-foreground">Home</TabsTrigger>
+          <TabsTrigger value="overview" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-foreground">Resumen</TabsTrigger>
         </TabsList>
 
         <TabsContent value="cards" className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-          <div className="space-y-4 rounded-[32px] border border-white/10 bg-white/[0.04] p-5">
+          <div className="space-y-4 rounded-[32px] border border-border bg-card/5 p-5">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-white">Listado de tarjetas</h2>
-                <p className="text-sm text-slate-400">CRUD completo, estado visible y acciones rápidas.</p>
+                <h2 className="text-xl font-semibold text-foreground">Listado de tarjetas</h2>
+                <p className="text-sm text-muted-foreground">CRUD completo, estado visible y acciones rápidas.</p>
               </div>
               <Button
                 onClick={() => {
@@ -474,7 +494,8 @@ export function AdminDashboard() {
                       bankId: draft.bankId,
                       name: draft.name || "Nueva tarjeta",
                       slug: draft.slug || slugify(draft.name || "Nueva tarjeta"),
-                      category: draft.category,
+                      cardType: draft.cardType,
+                      category: draft.category || undefined,
                       imageUrl: draft.imageUrl,
                       description: draft.description,
                       benefits: draft.benefits.map((b) => b.value).filter(Boolean),
@@ -508,14 +529,14 @@ export function AdminDashboard() {
             </div>
             <div className="space-y-3">
               {cards.map((card) => (
-                <div key={card.id} className="rounded-[24px] border border-white/10 bg-white/5 p-4">
+                <div key={card.id} className="rounded-[24px] border border-border bg-card p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-semibold text-white">{card.name}</h3>
-                      <p className="text-sm text-slate-400">{banks.find((bank) => bank.id === card.bankId)?.name} · {card.category}</p>
+                      <h3 className="font-semibold text-foreground">{card.name}</h3>
+                      <p className="text-sm text-muted-foreground">{banks.find((bank) => bank.id === card.bankId)?.name} · {(card as any).cardType === "debit" ? "Débito" : card.category}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setCardEditorId(card.id)} className="rounded-full border-white/10 bg-white/5 text-white hover:bg-white/10">Editar</Button>
+                      <Button variant="outline" size="sm" onClick={() => setCardEditorId(card.id)} className="rounded-full border-border bg-card text-foreground hover:bg-accent">Editar</Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -552,7 +573,7 @@ export function AdminDashboard() {
                             toast.error("No se pudo actualizar el estado");
                           }
                         }}
-                        className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-xs font-medium text-slate-200"
+                        className="rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-medium text-foreground"
                       >
                         {action.label}
                       </button>
@@ -564,20 +585,20 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-5">
+          <div className="rounded-[32px] border border-border bg-card/5 p-5">
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-white">Editor de tarjeta</h2>
-                <p className="text-sm text-slate-400">Formulario premium + modo JSON alternable.</p>
+                <h2 className="text-xl font-semibold text-foreground">Editor de tarjeta</h2>
+                <p className="text-sm text-muted-foreground">Formulario premium + modo JSON alternable.</p>
               </div>
-              <Button variant="outline" onClick={() => setAdvancedMode((value) => !value)} className="rounded-full border-white/10 bg-white/5 text-white hover:bg-white/10">
+              <Button variant="outline" onClick={() => setAdvancedMode((value) => !value)} className="rounded-full border-border bg-card text-foreground hover:bg-accent">
                 <FileJson className="size-4" /> {advancedMode ? "Modo formulario" : "Modo JSON"}
               </Button>
             </div>
 
             {advancedMode ? (
               <div className="space-y-4">
-                <Textarea value={jsonValue} onChange={(event) => setJsonValue(event.target.value)} className="min-h-[640px] rounded-[28px] border-white/10 bg-[#0D1020] font-mono text-xs text-slate-200" />
+                <Textarea value={jsonValue} onChange={(event) => setJsonValue(event.target.value)} className="min-h-[640px] rounded-[28px] border-border bg-[#0D1020] font-mono text-xs text-foreground" />
                 <Button onClick={applyJsonMode} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90">Aplicar JSON</Button>
               </div>
             ) : (
@@ -585,28 +606,39 @@ export function AdminDashboard() {
                 <InputField label="Nombre" value={cardForm.watch("name")} onChange={(value) => { cardForm.setValue("name", value); cardForm.setValue("slug", slugify(value)); }} error={cardForm.formState.errors.name?.message} />
                 <InputField label="Slug" value={cardForm.watch("slug")} onChange={(value) => cardForm.setValue("slug", slugify(value))} error={cardForm.formState.errors.slug?.message} />
                 <SelectField label="Banco" value={cardForm.watch("bankId")} onChange={(value) => cardForm.setValue("bankId", value)} options={banks.map((bank) => ({ label: bank.name, value: bank.id }))} />
-                <SelectField label="Categoría" value={cardForm.watch("category")} onChange={(value) => cardForm.setValue("category", value as CardFormValues["category"])} options={CARD_CATEGORIES.map((item) => ({ label: item, value: item }))} />
+                <SelectField label="Tipo de tarjeta" value={cardForm.watch("cardType")} onChange={(value) => cardForm.setValue("cardType", value as CardFormValues["cardType"])} options={[{ label: "Crédito", value: "credit" }, { label: "Débito", value: "debit" }]} />
+                {cardForm.watch("cardType") === "credit" && (
+                  <SelectField label="Categoría" value={cardForm.watch("category") || "cashback"} onChange={(value) => cardForm.setValue("category", value as CardFormValues["category"])} options={CARD_CATEGORIES.map((item) => ({ label: item, value: item }))} />
+                )}
                 <InputField label="Ingreso mínimo" value={cardForm.watch("minIncome")} onChange={(value) => cardForm.setValue("minIncome", value)} error={cardForm.formState.errors.minIncome?.message} />
                 <InputField label="Anualidad" value={cardForm.watch("annualFee")} onChange={(value) => cardForm.setValue("annualFee", value)} error={cardForm.formState.errors.annualFee?.message} />
                 <SelectField label="Moneda" value={cardForm.watch("currency")} onChange={(value) => cardForm.setValue("currency", value as CardFormValues["currency"])} options={[{ label: "DOP", value: "DOP" }, { label: "USD", value: "USD" }]} />
                 <SelectField label="Aprobación" value={cardForm.watch("approvalLevel")} onChange={(value) => cardForm.setValue("approvalLevel", value as CardFormValues["approvalLevel"])} options={[{ label: "Bajo", value: "bajo" }, { label: "Medio", value: "medio" }, { label: "Alto", value: "alto" }]} />
                 <InputField label="Texto destacado" value={cardForm.watch("highlight")} onChange={(value) => cardForm.setValue("highlight", value)} error={cardForm.formState.errors.highlight?.message} className="xl:col-span-2" />
-                <InputField label="Logo / imagen URL" value={cardForm.watch("imageUrl")} onChange={(value) => cardForm.setValue("imageUrl", value)} error={cardForm.formState.errors.imageUrl?.message} className="xl:col-span-2" />
+                <div className="space-y-2 xl:col-span-2">
+                  <InputField label="Logo / imagen URL" value={cardForm.watch("imageUrl")} onChange={(value) => cardForm.setValue("imageUrl", value)} error={cardForm.formState.errors.imageUrl?.message} />
+                  {imagePreview && (
+                    <div className="mt-2">
+                      <p className="mb-2 text-xs text-muted-foreground">Preview:</p>
+                      <img src={imagePreview} alt="Preview" className="h-32 w-auto rounded-lg border border-border object-contain" />
+                    </div>
+                  )}
+                </div>
                 <InputField label="Perfil ideal" value={cardForm.watch("idealProfile")} onChange={(value) => cardForm.setValue("idealProfile", value)} error={cardForm.formState.errors.idealProfile?.message} className="xl:col-span-2" />
                 <InputField label="Descripción SEO" value={cardForm.watch("seoDescription")} onChange={(value) => cardForm.setValue("seoDescription", value)} error={cardForm.formState.errors.seoDescription?.message} className="xl:col-span-2" />
                 <div className="space-y-2 xl:col-span-2">
-                  <label className="text-sm font-medium text-slate-200">Descripción enriquecida</label>
+                  <label className="text-sm font-medium text-foreground">Descripción enriquecida</label>
                   {editorReady ? (
                     <RichTextEditor value={cardForm.watch("description")} onChange={(value) => cardForm.setValue("description", value)} />
                   ) : (
-                    <Textarea value={cardForm.watch("description")} onChange={(event) => cardForm.setValue("description", event.target.value)} className="min-h-40 rounded-[28px] border-white/10 bg-[#0D1020] text-xs text-slate-200" />
+                    <Textarea value={cardForm.watch("description")} onChange={(event) => cardForm.setValue("description", event.target.value)} className="min-h-40 rounded-[28px] border-border bg-[#0D1020] text-xs text-foreground" />
                   )}
                 </div>
                 <DynamicList label="Beneficios" fields={benefitFields.fields} onAdd={() => benefitFields.append({ value: "" })} onRemove={(index) => benefitFields.remove(index)} render={(field, index) => (
-                  <Input value={cardForm.watch(`benefits.${index}.value`)} onChange={(event) => cardForm.setValue(`benefits.${index}.value`, event.target.value)} className="rounded-[20px] border-white/10 bg-white/5 text-white" placeholder="Beneficio" />
+                  <Input value={cardForm.watch(`benefits.${index}.value`)} onChange={(event) => cardForm.setValue(`benefits.${index}.value`, event.target.value)} className="rounded-[20px] border-border bg-card text-foreground" placeholder="Beneficio" />
                 )} />
                 <DynamicList label="Requisitos" fields={requirementFields.fields} onAdd={() => requirementFields.append({ value: "" })} onRemove={(index) => requirementFields.remove(index)} render={(field, index) => (
-                  <Input value={cardForm.watch(`requirements.${index}.value`)} onChange={(event) => cardForm.setValue(`requirements.${index}.value`, event.target.value)} className="rounded-[20px] border-white/10 bg-white/5 text-white" placeholder="Requisito" />
+                  <Input value={cardForm.watch(`requirements.${index}.value`)} onChange={(event) => cardForm.setValue(`requirements.${index}.value`, event.target.value)} className="rounded-[20px] border-border bg-card text-foreground" placeholder="Requisito" />
                 )} />
                 <SelectField label="Visibilidad" value={cardForm.watch("visibility")} onChange={(value) => cardForm.setValue("visibility", value as CardFormValues["visibility"])} options={[{ label: "Draft", value: "draft" }, { label: "Active", value: "active" }, { label: "Featured", value: "featured" }]} />
                 <div className="grid grid-cols-2 gap-3 self-end">
@@ -622,11 +654,11 @@ export function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="banks" className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-          <div className="space-y-4 rounded-[32px] border border-white/10 bg-white/[0.04] p-5">
+          <div className="space-y-4 rounded-[32px] border border-border bg-card/5 p-5">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-white">Bancos</h2>
-                <p className="text-sm text-slate-400">Administra entidades y mueve tarjetas entre bancos.</p>
+                <h2 className="text-xl font-semibold text-foreground">Bancos</h2>
+                <p className="text-sm text-muted-foreground">Administra entidades y mueve tarjetas entre bancos.</p>
               </div>
               <Button
                 onClick={() => {
@@ -641,14 +673,14 @@ export function AdminDashboard() {
             </div>
             <div className="space-y-3">
               {banks.map((bank) => (
-                <div key={bank.id} className="rounded-[24px] border border-white/10 bg-white/5 p-4">
+                <div key={bank.id} className="rounded-[24px] border border-border bg-card p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-semibold text-white">{bank.name}</h3>
-                      <p className="text-sm text-slate-400">{bank.description}</p>
+                      <h3 className="font-semibold text-foreground">{bank.name}</h3>
+                      <p className="text-sm text-muted-foreground">{bank.description}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setBankEditorId(bank.id)} className="rounded-full border-white/10 bg-white/5 text-white hover:bg-white/10">Editar</Button>
+                      <Button variant="outline" size="sm" onClick={() => setBankEditorId(bank.id)} className="rounded-full border-border bg-card text-foreground hover:bg-accent">Editar</Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -663,22 +695,22 @@ export function AdminDashboard() {
                       </Button>
                     </div>
                   </div>
-                  <div className="mt-3 text-xs text-slate-500">{cards.filter((card) => card.bankId === bank.id).length} tarjetas asociadas</div>
+                  <div className="mt-3 text-xs text-muted-foreground">{cards.filter((card) => card.bankId === bank.id).length} tarjetas asociadas</div>
                 </div>
               ))}
             </div>
           </div>
-          <form onSubmit={saveBankHandler} className="space-y-4 rounded-[32px] border border-white/10 bg-white/[0.04] p-5">
+          <form onSubmit={saveBankHandler} className="space-y-4 rounded-[32px] border border-border bg-card/5 p-5">
             <div>
-              <h2 className="text-xl font-semibold text-white">Editor de banco</h2>
-              <p className="text-sm text-slate-400">Nombre, slug, branding y presencia destacada.</p>
+              <h2 className="text-xl font-semibold text-foreground">Editor de banco</h2>
+              <p className="text-sm text-muted-foreground">Nombre, slug, branding y presencia destacada.</p>
             </div>
             <InputField label="Nombre" value={bankForm.watch("name")} onChange={(value) => { bankForm.setValue("name", value); bankForm.setValue("slug", slugify(value)); }} error={bankForm.formState.errors.name?.message} />
             <InputField label="Slug" value={bankForm.watch("slug")} onChange={(value) => bankForm.setValue("slug", slugify(value))} error={bankForm.formState.errors.slug?.message} />
             <InputField label="Logo URL" value={bankForm.watch("logoUrl")} onChange={(value) => bankForm.setValue("logoUrl", value)} error={bankForm.formState.errors.logoUrl?.message} />
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Descripción</label>
-              <Textarea value={bankForm.watch("description")} onChange={(event) => bankForm.setValue("description", event.target.value)} className="min-h-32 rounded-[24px] border-white/10 bg-white/5 text-white" />
+              <label className="text-sm font-medium text-foreground">Descripción</label>
+              <Textarea value={bankForm.watch("description")} onChange={(event) => bankForm.setValue("description", event.target.value)} className="min-h-32 rounded-[24px] border-border bg-card text-foreground" />
             </div>
             <ToggleField label="Banco featured" pressed={bankForm.watch("featured")} onChange={(value) => bankForm.setValue("featured", value)} />
             <div className="flex justify-end">
@@ -693,29 +725,29 @@ export function AdminDashboard() {
 
         <TabsContent value="overview" className="grid gap-6 xl:grid-cols-3">
 
-          <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6">
+          <div className="rounded-[32px] border border-border bg-card/5 p-6">
             <Landmark className="mb-4 size-8 text-primary" />
-            <h3 className="text-xl font-semibold text-white">{banks.length} bancos</h3>
-            <p className="mt-2 text-sm leading-7 text-slate-400">Base estructural del catálogo financiero dominicano.</p>
+            <h3 className="text-xl font-semibold text-foreground">{banks.length} bancos</h3>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">Base estructural del catálogo financiero dominicano.</p>
           </div>
-          <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6">
+          <div className="rounded-[32px] border border-border bg-card/5 p-6">
             <Sparkles className="mb-4 size-8 text-primary" />
-            <h3 className="text-xl font-semibold text-white">{cards.length} tarjetas</h3>
-            <p className="mt-2 text-sm leading-7 text-slate-400">Cada tarjeta puede editarse desde formulario visual o JSON completo.</p>
+            <h3 className="text-xl font-semibold text-foreground">{cards.length} tarjetas</h3>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">Cada tarjeta puede editarse desde formulario visual o JSON completo.</p>
           </div>
-          <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6">
+          <div className="rounded-[32px] border border-border bg-card/5 p-6">
             <FileJson className="mb-4 size-8 text-primary" />
-            <h3 className="text-xl font-semibold text-white">Contenido flexible</h3>
-            <p className="mt-2 text-sm leading-7 text-slate-400">Listas dinámicas, rich text, featured, visibilidad y control por banco.</p>
+            <h3 className="text-xl font-semibold text-foreground">Contenido flexible</h3>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">Listas dinámicas, rich text, featured, visibilidad y control por banco.</p>
           </div>
-          <div className="xl:col-span-3 rounded-[32px] border border-white/10 bg-white/[0.04] p-6">
+          <div className="xl:col-span-3 rounded-[32px] border border-border bg-card/5 p-6">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-semibold text-white">Sincronización</h3>
-                <p className="text-sm text-slate-400">Refresca la data remota de Firestore cuando lo necesites.</p>
+                <h3 className="text-xl font-semibold text-foreground">Sincronización</h3>
+                <p className="text-sm text-muted-foreground">Refresca la data remota de Firestore cuando lo necesites.</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => refresh()} className="rounded-full border-white/10 bg-white/5 text-white hover:bg-white/10">Refrescar contenido</Button>
+                <Button variant="outline" onClick={() => refresh()} className="rounded-full border-border bg-card text-foreground hover:bg-accent">Refrescar contenido</Button>
                 <Button variant="outline" onClick={importDemoData} className="rounded-full border-primary/20 bg-primary/10 text-primary hover:bg-primary/15">Importar datos demo</Button>
                 <Button variant="outline" onClick={importPopularBhdData} className="rounded-full border-emerald-300/20 bg-emerald-300/10 text-emerald-200 hover:bg-emerald-300/15">Importar Popular+BHD</Button>
                 <input
@@ -811,6 +843,7 @@ export function AdminDashboard() {
                               bankId: bankSlug,
                               name,
                               slug,
+                              cardType: "credit",
                               category: mapCategory(item.type),
                               imageUrl: String(item.logo || "/assets/placeholder.svg"),
                               description: item.description || `<p>${details.highlight}</p>`,
@@ -847,7 +880,7 @@ export function AdminDashboard() {
                 <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="rounded-full border-primary/20 bg-primary/10 text-primary hover:bg-primary/15">Importar JSON</Button>
               </div>
             </div>
-            <p className="text-sm leading-7 text-slate-300">El frontend consume datos y el panel administra bancos y tarjetas mediante Firestore. Storage queda limitado a URLs externas en los formularios, como pediste.</p>
+            <p className="text-sm leading-7 text-muted-foreground">El frontend consume datos y el panel administra bancos y tarjetas mediante Firestore. Storage queda limitado a URLs externas en los formularios, como pediste.</p>
           </div>
         </TabsContent>
       </Tabs>
@@ -858,8 +891,8 @@ export function AdminDashboard() {
 function InputField({ label, value, onChange, error, className }: { label: string; value: string; onChange: (value: string) => void; error?: string; className?: string }) {
   return (
     <div className={className}>
-      <label className="mb-2 block text-sm font-medium text-slate-200">{label}</label>
-      <Input value={value} onChange={(event) => onChange(event.target.value)} className="rounded-[20px] border-white/10 bg-white/5 text-white placeholder:text-slate-500" />
+      <label className="mb-2 block text-sm font-medium text-foreground">{label}</label>
+      <Input value={value} onChange={(event) => onChange(event.target.value)} className="rounded-[20px] border-border bg-card text-foreground placeholder:text-muted-foreground" />
       {error ? <p className="mt-2 text-xs text-red-300">{error}</p> : null}
     </div>
   );
@@ -868,12 +901,12 @@ function InputField({ label, value, onChange, error, className }: { label: strin
 function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<{ label: string; value: string }> }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-slate-200">{label}</label>
+      <label className="mb-2 block text-sm font-medium text-foreground">{label}</label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="rounded-[20px] border-white/10 bg-white/5 text-white">
+        <SelectTrigger className="rounded-[20px] border-border bg-card text-foreground">
           <SelectValue placeholder="Selecciona" />
         </SelectTrigger>
-        <SelectContent className="border-white/10 bg-[#111322] text-white">
+        <SelectContent className="border-border bg-[#111322] text-foreground">
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
           ))}
@@ -888,7 +921,7 @@ function ToggleField({ label, pressed, onChange }: { label: string; pressed: boo
     <button
       type="button"
       onClick={() => onChange(!pressed)}
-      className={`rounded-[20px] border px-4 py-3 text-sm font-medium transition ${pressed ? "border-primary/30 bg-primary/15 text-primary" : "border-white/10 bg-white/5 text-slate-200"}`}
+      className={`rounded-[20px] border px-4 py-3 text-sm font-medium transition ${pressed ? "border-primary/30 bg-primary/15 text-primary" : "border-border bg-card text-foreground"}`}
     >
       {label}: {pressed ? "Sí" : "No"}
     </button>
@@ -899,8 +932,8 @@ function DynamicList({ label, fields, onAdd, onRemove, render }: { label: string
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-slate-200">{label}</label>
-        <Button type="button" variant="outline" size="sm" onClick={onAdd} className="rounded-full border-white/10 bg-white/5 text-white hover:bg-white/10">
+        <label className="text-sm font-medium text-foreground">{label}</label>
+        <Button type="button" variant="outline" size="sm" onClick={onAdd} className="rounded-full border-border bg-card text-foreground hover:bg-accent">
           <Plus className="size-4" />
           Agregar
         </Button>
@@ -910,7 +943,7 @@ function DynamicList({ label, fields, onAdd, onRemove, render }: { label: string
           <div key={field.id} className="flex items-center gap-2">
             <div className="flex-1">{render(field, index)}</div>
             {fields.length > 1 ? (
-              <Button type="button" variant="outline" size="icon" onClick={() => onRemove(index)} className="rounded-full border-white/10 bg-white/5 text-white hover:bg-white/10">
+              <Button type="button" variant="outline" size="icon" onClick={() => onRemove(index)} className="rounded-full border-border bg-card text-foreground hover:bg-accent">
                 <Trash2 className="size-4" />
               </Button>
             ) : null}

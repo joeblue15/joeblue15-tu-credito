@@ -1,0 +1,31 @@
+name: tu-credito
+services:
+  - name: web
+    source_dir: /
+    github:
+      repo: joeblue15/joeblue15-tu-credito
+      branch: main
+    build_command: npm run build
+    run_command: npm start
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    env_vars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_FIREBASE_API_KEY
+        value: AIzaSyAGnZi4i8GoSr0Kuvkypn5MV273AAyL_W4
+      - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+        value: tu-credito-rd.firebaseapp.com
+      - key: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+        value: tu-credito-rd
+      - key: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+        value: tu-credito-rd.firebasestorage.app
+      - key: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+        value: "244614046556"
+      - key: NEXT_PUBLIC_FIREBASE_APP_ID
+        value: 1:244614046556:web:8e90e0193b08b1665e1799
+      - key: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+        value: G-Z6K6KT774T
+      - key: GEMINI_API_KEY
+        value: ${GEMINI_API_KEY}

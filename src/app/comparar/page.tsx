@@ -4,7 +4,7 @@ import { ComparePage } from "@/components/compare-page";
 
 export const metadata: Metadata = {
   title: "Comparar tarjetas",
-  description: "Compara visualmente hasta 4 tarjetas de crédito de República Dominicana en TuCredito.",
+  description: "Compara visualmente hasta 4 tarjetas de crédito de República Dominicana en TuTarjetaRD.",
 };
 
 export default function CompararPage() {

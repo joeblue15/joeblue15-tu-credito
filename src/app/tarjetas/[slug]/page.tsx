@@ -3,28 +3,35 @@ import { CardDetailPage } from "@/components/card-detail-page";
 
 export async function generateStaticParams() {
   try {
-    const mod = await import("@/lib/datasets/popular-bhd");
-    const grouped = (mod as any).default as Record<string, Array<{ slug?: string }>>;
-    const all: string[] = [];
-    for (const arr of Object.values(grouped)) {
-      for (const item of arr) {
-        const slug = (item as any).slug as string | undefined;
-        if (slug) all.push(slug);
-      }
-    }
-    const unique = Array.from(new Set(all));
-    return unique.map((slug) => ({ slug }));
+    const { fetchCreditCards } = await import("@/lib/firestore");
+    const cards = await fetchCreditCards();
+    return cards.map((card: any) => ({ slug: card.slug }));
   } catch {
-    return [];
+    // Fallback to static dataset if Firestore fails
+    try {
+      const mod = await import("@/lib/datasets/popular-bhd");
+      const grouped = (mod as any).default as Record<string, Array<{ slug?: string }>>;
+      const all: string[] = [];
+      for (const arr of Object.values(grouped)) {
+        for (const item of arr) {
+          const slug = (item as any).slug as string | undefined;
+          if (slug) all.push(slug);
+        }
+      }
+      const unique = Array.from(new Set(all));
+      return unique.map((slug) => ({ slug }));
+    } catch {
+      return [];
+    }
   }
 }
 
 export const metadata: Metadata = {
-  title: "Detalle de tarjeta | TuCredito",
-  description: "Información detallada de la tarjeta seleccionada en TuCredito.",
+  title: "Detalle de tarjeta | TuTarjetaRD",
+  description: "Información detallada de la tarjeta seleccionada en TuTarjetaRD.",
 };
 
-export const dynamicParams = false;
+export const dynamicParams = true;
 
 export default async function TarjetaDetallePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

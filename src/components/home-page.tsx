@@ -28,9 +28,13 @@ export function HomePage() {
           <Button asChild className="h-10 rounded-none bg-foreground px-5 text-[12px] font-medium text-background hover:bg-foreground/90">
             <Link href="/tarjetas">Explorar Tarjetas</Link>
           </Button>
-          <Button asChild variant="outline" className="h-10 rounded-none border-border bg-transparent px-5 text-[12px] font-medium text-foreground hover:bg-transparent hover:text-foreground">
-            <Link href="/ia">Asesor Inteligente</Link>
-          </Button>
+          <Link href="/ia" className="ia-cyber text-[10px]">
+            <span className="ia-edge ia-edge-top" aria-hidden="true" />
+            <span className="ia-edge ia-edge-right" aria-hidden="true" />
+            <span className="ia-edge ia-edge-bottom" aria-hidden="true" />
+            <span className="ia-edge ia-edge-left" aria-hidden="true" />
+            <span className="ia-label">Asesor Inteligente</span>
+          </Link>
         </div>
       </section>
       <section className="border-y border-border py-14 sm:py-16">
@@ -68,14 +72,6 @@ export function HomePage() {
               </Button>
             </article>
           ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-[900px] px-5 py-16 text-center sm:px-8 sm:py-20">
-        <h2 className="text-[33px] font-semibold text-foreground">Respaldado por las mejores instituciones</h2>
-        <div className="mt-10 flex flex-col items-center justify-center gap-6 text-[18px] text-muted-foreground sm:flex-row sm:gap-16">
-          <span>Banco Popular Dominicano</span>
-          <span>BHD León</span>
         </div>
       </section>
     </div>

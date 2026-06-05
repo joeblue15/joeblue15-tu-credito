@@ -10,7 +10,7 @@ type CompareContextValue = {
 };
 
 const CompareContext = createContext<CompareContextValue | null>(null);
-const STORAGE_KEY = "tucredito-compare";
+const STORAGE_KEY = "tutarjetard-compare";
 
 export function CompareProvider({ children }: { children: React.ReactNode }) {
   const [selectedSlugs, setSelectedSlugs] = useState<string[]>([]);

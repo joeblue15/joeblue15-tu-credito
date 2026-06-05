@@ -5,7 +5,8 @@ export function formatCurrencyLabel(value: string) {
   return value?.trim() ? value : "No especificado";
 }
 
-export function getCategoryLabel(category: CardCategory) {
+export function getCategoryLabel(category?: CardCategory) {
+  if (!category) return null;
   return categoryLabels[category];
 }
 

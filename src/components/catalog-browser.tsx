@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCatalogData } from "@/hooks/use-catalog-data";
 import { categoryLabels } from "@/lib/mock-data";
-import { CARD_CATEGORIES } from "@/lib/types";
+import { CARD_CATEGORIES, CARD_TYPES } from "@/lib/types";
 
 export function CatalogBrowser() {
   const searchParams = useSearchParams();
@@ -17,18 +17,20 @@ export function CatalogBrowser() {
   const [category, setCategory] = useState(initialCategory);
   const [search, setSearch] = useState("");
   const [bankFilter, setBankFilter] = useState("all");
+  const [cardTypeFilter, setCardTypeFilter] = useState("all");
   const { cardsWithBanks, loading, banks } = useCatalogData();
 
   const filteredCards = useMemo(() => {
     return cardsWithBanks
       .filter((card) => card.active && card.visibility !== "draft")
+      .filter((card) => cardTypeFilter === "all" || (card as any).cardType === cardTypeFilter)
       .filter((card) => category === "all" || card.category === category)
       .filter((card) => bankFilter === "all" || card.bankId === bankFilter)
       .filter((card) => {
         const query = search.toLowerCase().trim();
         return !query || card.name.toLowerCase().includes(query) || card.bank.name.toLowerCase().includes(query);
       });
-  }, [bankFilter, cardsWithBanks, category, search]);
+  }, [bankFilter, cardsWithBanks, category, search, cardTypeFilter]);
 
   return (
     <div className="mx-auto max-w-[1220px] px-5 py-14 sm:px-8 sm:py-16">
@@ -39,13 +41,26 @@ export function CatalogBrowser() {
         </p>
       </div>
 
-      <div className="mb-8 grid gap-3 md:grid-cols-3">
+      <div className="mb-8 grid gap-3 md:grid-cols-4">
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Buscar por tarjeta o banco"
           className="h-11 rounded-none border-border bg-card text-sm text-foreground placeholder:text-muted-foreground"
         />
+        <Select value={cardTypeFilter} onValueChange={setCardTypeFilter}>
+          <SelectTrigger className="h-11 rounded-none border-border bg-card text-sm text-foreground">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent className="rounded-none border-border bg-card text-foreground">
+            <SelectItem value="all">Todos los tipos</SelectItem>
+            {CARD_TYPES.map((item) => (
+              <SelectItem key={item} value={item}>
+                {item === "credit" ? "Crédito" : "Débito"}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={category} onValueChange={setCategory}>
           <SelectTrigger className="h-11 rounded-none border-border bg-card text-sm text-foreground">
             <SelectValue placeholder="Categoría" />

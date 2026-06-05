@@ -29,7 +29,7 @@ export function ComparePage() {
       </div>
 
       {selectedCards.length >= 2 ? (
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
+        <div className="mb-12 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
           {selectedCards.map((card) => (
             <article key={card.id} className="surface p-5">
               <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{card.bank.name}</p>
@@ -53,29 +53,25 @@ export function ComparePage() {
           ))}
         </div>
       ) : (
-        <div className="surface p-8 text-sm text-muted-foreground">
+        <div className="mb-12 surface p-8 text-sm text-muted-foreground">
           Selecciona al menos 2 tarjetas desde el catálogo para activar la comparación.
         </div>
       )}
 
-      <div className="mt-12">
-        <h2 className="text-[28px] font-semibold text-foreground">Añadir tarjetas</h2>
-        <div className="mt-5 max-h-[560px] overflow-y-auto pr-1">
-          <div className="grid gap-4 lg:grid-cols-3">
-          {availableCards.map((card) => (
-            <button
-              key={card.id}
-              type="button"
-              onClick={() => toggleCard(card.slug)}
-              className="surface p-5 text-left transition hover:border-foreground/30"
-            >
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{card.bank.name}</p>
-              <h3 className="mt-3 text-[19px] font-semibold text-foreground">{card.name}</h3>
-              <p className="mt-3 text-[12px] leading-6 text-muted-foreground">{card.details.highlight}</p>
-            </button>
-          ))}
-          </div>
-        </div>
+      <h2 className="text-[28px] font-semibold text-foreground">Añadir tarjetas</h2>
+      <div className="mt-5 grid gap-4 lg:grid-cols-3">
+        {availableCards.map((card) => (
+          <button
+            key={card.id}
+            type="button"
+            onClick={() => toggleCard(card.slug)}
+            className="surface p-5 text-left transition hover:border-foreground/30"
+          >
+            <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{card.bank.name}</p>
+            <h3 className="mt-3 text-[19px] font-semibold text-foreground">{card.name}</h3>
+            <p className="mt-3 text-[12px] leading-6 text-muted-foreground">{card.details.highlight}</p>
+          </button>
+        ))}
       </div>
     </div>
   );
