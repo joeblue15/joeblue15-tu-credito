@@ -2,10 +2,14 @@
   command = "npm run build"
   publish = ".next"
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
-[functions]
-  node_bundler = "esbuild"
+[build.environment]
+  NEXT_PUBLIC_FIREBASE_API_KEY = "AIzaSyAGnZi4i8GoSr0Kuvkypn5MV273AAyL_W4"
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN = "tu-credito-rd.firebaseapp.com"
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID = "tu-credito-rd"
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET = "tu-credito-rd.firebasestorage.app"
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = "244614046556"
+  NEXT_PUBLIC_FIREBASE_APP_ID = "1:244614046556:web:8e90e0193b08b1665e1799"
+  NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID = "G-Z6K6KT774T"
