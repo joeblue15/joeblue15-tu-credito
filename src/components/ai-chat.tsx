@@ -11,7 +11,6 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { buildRecommendation, compareRecommendation } from "@/lib/recommendations";
-import { askGemini } from "@/lib/gemini";
 import { useAuth } from "@/context/auth-context";
 import type { ChatMessage, CreditCardWithBank } from "@/lib/types";
 
@@ -105,16 +104,7 @@ export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
           current.map((m) => (m.id === typingId ? { id: `${Date.now()}-assistant`, role: "assistant", content: answer, cards: slugs } : m))
         );
       } else {
-        const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-        if (geminiKey) {
-          const history = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
-          const out = await askGemini(prompt, cards, geminiKey, history);
-          setMessages((current) =>
-            current.map((m) => (m.id === typingId ? { id: `${Date.now()}-assistant`, role: "assistant", content: out.answer, cards: out.slugs } : m))
-          );
-        } else {
-          throw new Error("no ai configured");
-        }
+        throw new Error("no ai configured");
       }
     } catch {
       const comparison = compareRecommendation(prompt, cards);
