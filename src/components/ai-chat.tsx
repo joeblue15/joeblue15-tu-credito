@@ -28,8 +28,8 @@ export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
       id: "welcome",
       role: "assistant",
       content: userName 
-        ? `¡Hola ${userName}! 👋 Soy la IA de TuTarjetaRD. Estoy aquí para ayudarte a encontrar la tarjeta perfecta para ti. Puedo recomendarte opciones del catálogo de RD, comparar beneficios y explicarte diferencias por anualidad, ingresos o perfil ideal. ¿En qué puedo ayudarte hoy?`
-        : "Hola, soy la IA de TuTarjetaRD. Puedo recomendarte tarjetas reales del catálogo de RD, comparar opciones y explicarte diferencias por anualidad, ingresos o perfil ideal.",
+        ? `¡Hola ${userName}! 👋 Hola, soy tu asesor IA para tu próxima tarjeta de crédito. Dime qué buscas y te recomiendo tarjetas reales para RD.`
+        : "Hola, soy tu asesor IA para tu próxima tarjeta de crédito. Dime qué buscas y te recomiendo tarjetas reales para RD.",
     },
   ]);
 
