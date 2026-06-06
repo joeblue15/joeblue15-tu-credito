@@ -145,11 +145,14 @@ export function buildRecommendation(query: string, cards: CreditCardWithBank[]):
   if (approvalHigh) filters.push("aprobación exigente");
 
   const note = filters.length ? ` (filtros: ${filters.join(" · ")})` : "";
-  const answer = `Según tu consulta${note}, te convienen: ${top
+  const answer = `Según tu consulta${note}, te convienen:
+${top
     .map(
-      (card) => `${card.name} de ${card.bank.name} — ${getCategoryLabel(card.category)}; ${card.details.highlight}`
+      (card) => `• ${card.name} de ${card.bank.name} — ${getCategoryLabel(card.category)}; ${card.details.highlight}`
     )
-    .join("; ")}. ¿Quieres que compare por anualidad, ingreso mínimo o beneficios?`;
+    .join("\n")}
+
+¿Quieres que compare por anualidad, ingreso mínimo o beneficios?`;
 
   return {
     answer,

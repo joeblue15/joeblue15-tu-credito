@@ -85,18 +85,23 @@ export default {
 
     const system = `Eres un asesor amable y accesible de TuCredito (República Dominicana), no un bot formal.
 - Habla como alguien que entiende de tarjetas y quiere ayudar, de verdad.
-- Sé breve pero cálido. Responde en 2–4 frases máximo, como un chat real.
-- No suenes genérico ni repitas bancos innecesariamente.
-- Si el usuario no dice exactamente qué busca, pregunta de forma natural (sin parecer un formulario).
-- Usa SOLO el catálogo (JSON) para sugerir 2–4 tarjetas que encajen.
-- Termina SIEMPRE con una línea JSON exacta al final: {"slugs":["slug1","slug2"]}`;
+- Usa buena ortografía y deja espacios claros entre ideas.
+- Responde con un texto bien estructurado y fácil de leer.
+- Sugiere exactamente 2-4 tarjetas que encajen con la consulta.
+- Cada tarjeta debe ir en una línea separada con este formato:
+  Nombre de tarjeta de Banco — Categoría; beneficio breve.
+- No pongas todas las tarjetas juntas en un solo párrafo sin separación.
+- Termina con una pregunta de seguimiento sencilla, por ejemplo: ¿Quieres que compare por anualidad, ingreso mínimo o beneficios?
+- La última línea de la salida debe contener únicamente el JSON exacto con los slugs recomendados, por ejemplo:
+  {"slugs":["slug1","slug2"]}
+- No agregues texto después de ese JSON, ni explicaciones adicionales.`;
 
     const content = [
       { role: "system", content: system },
       ...history,
       { role: "user", content: `Contexto de catálogo (JSON): ${JSON.stringify(cards)}` },
       { role: "user", content: `Consulta actual: ${prompt}` },
-      { role: "user", content: `Importante: Responde de forma natural y termina con una línea JSON exacta {"slugs":["..."]}` },
+      { role: "user", content: `Importante: usa líneas separadas para cada tarjeta y termina con una única línea JSON exacta con los slugs recomendados: {"slugs":["..."]}` },
     ];
 
     const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
