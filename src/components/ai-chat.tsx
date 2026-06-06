@@ -154,36 +154,20 @@ export function AiChat({ cards }: { cards: CreditCardWithBank[] }) {
                       </div>
                       {message.content === "__typing__" ? <TypingDots /> : <p className="whitespace-pre-line">{message.content}</p>}
                       {message.cards?.length ? (
-                        <div className="mt-4 space-y-2">
-                          <div className="flex flex-wrap gap-2">
-                            {message.cards.map((slug) => {
-                              const card = cardsBySlug[slug];
-                              if (!card) return null;
-                              return (
-                                <Link
-                                  key={slug}
-                                  href={`/tarjetas/${slug}`}
-                                  className="border border-border px-3 py-1 text-xs font-medium text-foreground"
-                                >
-                                  {card.name}
-                                </Link>
-                              );
-                            })}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {message.cards.map((slug, index) => {
-                              const card = cardsBySlug[slug];
-                              if (!card) return null;
-                              return (
-                                <span key={slug}>
-                                  <Link href={`/tarjetas/${slug}`} className="text-primary underline">
-                                    [{card.name}]
-                                  </Link>
-                                  {index < message.cards!.length - 1 ? " " : ""}
-                                </span>
-                              );
-                            })}
-                          </div>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {message.cards.map((slug) => {
+                            const card = cardsBySlug[slug];
+                            if (!card) return null;
+                            return (
+                              <Link
+                                key={slug}
+                                href={`/tarjetas/${slug}`}
+                                className="border border-border px-3 py-1 text-xs font-medium text-foreground"
+                              >
+                                {card.name}
+                              </Link>
+                            );
+                          })}
                         </div>
                       ) : null}
                     </div>

@@ -84,24 +84,28 @@ export default {
       : [];
 
     const system = `Eres un asesor amable y accesible de TuCredito (República Dominicana), no un bot formal.
-- Habla como alguien que entiende de tarjetas y quiere ayudar, de verdad.
-- Usa buena ortografía y deja espacios claros entre ideas.
-- Responde con un texto bien estructurado y fácil de leer.
-- Sugiere exactamente 2-4 tarjetas que encajen con la consulta.
-- Cada tarjeta debe ir en una línea separada con este formato:
-  Nombre de tarjeta de Banco — Categoría; beneficio breve.
-- No pongas todas las tarjetas juntas en un solo párrafo sin separación.
-- Termina con una pregunta de seguimiento sencilla, por ejemplo: ¿Quieres que compare por anualidad, ingreso mínimo o beneficios?
-- La última línea de la salida debe contener únicamente el JSON exacto con los slugs recomendados, por ejemplo:
+- Responde siempre en español con buena ortografía y separación clara entre ideas.
+- Si el usuario pide un tipo de tarjeta, selecciona solo las tarjetas más relevantes del catálogo.
+- Si el usuario menciona un nombre específico como Bravo o Jumbo, incluye esa tarjeta si existe en el catálogo.
+- Si el usuario pide una sola recomendación, devuelve exactamente una tarjeta.
+- Si el usuario pide varias, devuelve de 1 a 4 tarjetas.
+- Usa este formato exacto en la respuesta:
+  Según tu consulta, te convienen:
+  • Nombre de tarjeta de Banco — Categoría; beneficio breve.
+  • Otra tarjeta de Banco — Categoría; beneficio breve.
+
+  ¿Quieres que compare por anualidad, ingreso mínimo o beneficios?
   {"slugs":["slug1","slug2"]}
-- No agregues texto después de ese JSON, ni explicaciones adicionales.`;
+- No uses negritas, emojis, ni enlaces markdown.
+- No agregues texto antes de "Según tu consulta" ni después del JSON final.
+- La última línea debe ser solamente el JSON exacto de slugs con doble comillas.`;
 
     const content = [
       { role: "system", content: system },
       ...history,
       { role: "user", content: `Contexto de catálogo (JSON): ${JSON.stringify(cards)}` },
       { role: "user", content: `Consulta actual: ${prompt}` },
-      { role: "user", content: `Importante: usa líneas separadas para cada tarjeta y termina con una única línea JSON exacta con los slugs recomendados: {"slugs":["..."]}` },
+      { role: "user", content: `Responde con el formato exacto anterior. La última línea debe ser únicamente el JSON con los slugs recomendados.` },
     ];
 
     const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -115,9 +119,11 @@ export default {
       body: JSON.stringify({
         model: env.OPENROUTER_MODEL || "deepseek/deepseek-chat-v3.1",
         messages: content,
-        temperature: 0.6,
-        top_p: 0.9,
-        presence_penalty: 0.2,
+        temperature: 0.2,
+        top_p: 1,
+        presence_penalty: 0,
+        frequency_penalty: 0,
+        max_tokens: 350,
       }),
     });
 
